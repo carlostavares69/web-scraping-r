@@ -2,14 +2,17 @@
 ## CONFIGURACOES DO PROJETO
 ##############################################################################################
 
+# Endereco do site que contem os dados 
+URL <- "https://www.sspds.ce.gov.br/estatisticas-2018"
+
 # Nome padrao para todos os arquivos
-nome_arquivo <- c("Indicadores_crimes_CE_2018")
+nome_arquivo <- c("Indicadores_Crimes_CE_2018")
 
 # Nomes da planilha EXCEL (.xls | .xlsx)
 arquivo_csv <- nome_arquivo
 
 # Pacotes utilizados na analise.
-pacotes_analise <- c("tidyverse","tabulizer","readr","rgdal","kableExtra")
+pacotes_analise <- c("tidyverse","tabulizer","readr","rgdal","stringi","kableExtra")
 
 ##############################################################################################
 ## CONFIGURACOES DO RSTUDIO
@@ -70,4 +73,5 @@ print(suppressMessages(library(tidyverse)))
 print(suppressMessages(library(tabulizer)))
 print(suppressMessages(library(readr)))
 print(suppressMessages(library(rgdal)))
+print(suppressMessages(library(stringi)))
 print(suppressMessages(library(kableExtra)))
