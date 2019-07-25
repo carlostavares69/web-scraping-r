@@ -20,15 +20,45 @@ source(file = file.path(".", "Scripts/Configuracoes.R"), encoding = "UTF-8")
 # Includes das funcoes utilizadas na analise
 source(file = file.path(".", "Scripts/Funcoes.R"), encoding = "UTF-8") 
 
+# Includes das funcoes utilizadas nas limpezas dos dados
+source(file = file.path(".", "Scripts/Funcao_limpa_dados_2017.R"), encoding = "UTF-8") 
+
 ##############################################################################################
 ## COLETA DOS DADOS
 ##############################################################################################
 
-# Executa a funcao que obtem um data frame com urls e nomes dos documentos com "xml2" e rvest" e "purrr" 
-df_listas = extrai_listas(URL)
+# Executa a funcao que obtem um data frame com urls e nomes dos documentos de 2018
+df_listas_2018 = extrai_lista_documentos(URL_2018)
 
-# Executa a funcao que realiza o download do(s) documento(s) na pasta local com "dplyr"
-download_documentos(df_listas)
+# Executa a funcao que obtem um data frame com urls e nomes dos documentos de 2017
+df_listas_2017 = extrai_lista_documentos(URL_2017)
+
+# Executa a funcao que obtem um data frame com urls e nomes dos documentos de 2016
+df_listas_2016 = extrai_lista_documentos(URL_2016)
+
+# Executa a funcao que obtem um data frame com urls e nomes dos documentos de 2015
+df_listas_2015 = extrai_lista_documentos(URL_2015)
+
+# Executa a funcao que obtem um data frame com urls e nomes dos documentos de 2014
+df_listas_2014 = extrai_lista_documentos(URL_2014)
+
+# Executa a funcao que realiza o download do(s) documento(s) de 2018
+download_documentos(df_listas_2018)
+
+# Executa a funcao que realiza o download do(s) documento(s) de 2017
+download_documentos(df_listas_2017)
+
+# Executa a funcao que realiza o download do(s) documento(s) de 2016
+download_documentos(df_listas_2016)
+
+# Executa a funcao que realiza o download do(s) documento(s) de 2015
+download_documentos(df_listas_2015)
+
+# Executa a funcao que realiza o download do(s) documento(s) de 2014
+download_documentos(df_listas_2014)
+
+# Executa a funcao que realiza o download do(s) documento(s) por ano
+obtem_arquivos()
 
 ##############################################################################################
 ## LIMPEZA DOS DADOS

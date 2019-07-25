@@ -3,7 +3,17 @@
 ##############################################################################################
 
 # Endereco do site que contem os dados 
-URL <- "https://www.sspds.ce.gov.br/estatisticas-2018"
+URL_site <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2/"
+
+URL_2018 <- "https://www.sspds.ce.gov.br/estatisticas-2018"
+
+URL_2017 <- "https://www.sspds.ce.gov.br/estatisticas-2-2"
+
+URL_2016 <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2"
+
+URL_2015 <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2"
+
+URL_2014 <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2"
 
 # Nome padrao para todos os arquivos
 nome_arquivo <- c("Indicadores_Crimes_CE_2018")

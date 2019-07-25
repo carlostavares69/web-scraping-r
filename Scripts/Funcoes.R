@@ -2,10 +2,45 @@
 #                                   COLETA                                      
 #-------------------------------------------------------------------------------------------
 
-# Funcao que extrai informacoes do codigo html da pagina
-extrai_listas <- function(url_pagina) {
-  print(paste("Lendo codigo HTML da pagina Web:", url_pagina, sep = " "))
+# Funcao que extrai informacoes de ano do codigo html da pagina
+extrai_lista_anos <- function(url_site) {
+  #print(paste("Lendo codigo HTML da pagina Web:", url_site, sep = " "))
+
+  url_site <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2/"
   
+  pagina_html <- xml2::read_html(url_pagina)
+  
+  df_lista_urls <- pagina_html %>% #obtem codigo html da pagina
+    rvest::html_nodes('.grid a.box') %>% # Filtro das tags "a" (link) desejadas
+    purrr::map(xml2::xml_attrs) %>% # # Mapeia os nos html e cria lista com tags
+    purrr::map_df(~as.list(.)) %>% # Converte o mapa de tags de lista em data frame 
+    na.omit(.) %>% # exclui missings
+    .[-c(nrow(.)),] # remove ultima linha
+  
+  df_lista_titulos <- pagina_html %>% #obtem codigo html da pagina
+    rvest::html_nodes('.grid p') %>% # Filtro das tags "h3" (nomes dos meses de cada link)desejadas
+    rvest::html_text() %>% # Converte a relacao de nomes em texto
+    #gsub(is.character, "", .) %>% # Substitui barras por travessao com espaco 
+    gsub(" ", "", .) %>% # Substitui espaco com travessao por travessao sem espaco
+    substr(., nchar(.)-3, nchar(.)) %>% # obtem apenas os anos
+    .[-length(.)] %>% # remove ano 2013
+    as.data.frame(.) %>% # Converte a lista de titulos em data frame
+    setNames(., "ano") # O "." significa trazer o data frame anterior e e atribui o nome "ano" da coluna do dataframe
+    
+  # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
+  df_urls_anos <- data.frame(df_lista_urls, df_lista_titulos) 
+  
+  excluir <- c("class", "target") # Lista de colunas a serem excluidos"
+  df_urls_anos <- df_urls_anos[,!(names(df_urls_anos) %in% excluir)] # Excluir as colunas "class" e/ou "target" do data frame
+  df_urls_anos[,1][df_urls_anos[, 1] == "#"] <- NA # substituii cerquilha,"#", em missing
+  
+  return(df_urls_anos)
+}
+
+# Funcao que extrai informacoes de docs do codigo html da pagina
+extrai_lista_documentos <- function(url_pagina) {
+  #print(paste("Lendo codigo HTML da pagina Web:", url_pagina, sep = " "))
+
   pagina_html <- xml2::read_html(url_pagina)
   
   df_lista_urls <- pagina_html %>% #obtem codigo html da pagina
@@ -33,29 +68,60 @@ extrai_listas <- function(url_pagina) {
 }
 
 # Funcao que formata o nome dos arquivos
-nomes_arquivo <- function(nome_relacao) {
+nomes_arquivo <- function(dir_superior, nome_relacao) {
   nome_arquivo = gsub("[/. ,]","_", nome_relacao)
-  paste0(dir_arquivos, "/", nome_arquivo, ".pdf")
+  path <- file.path(".", dir_arquivos, dir_superior, paste0(nome_arquivo, ".pdf"))
+  return(path)
 }
 
 # Funcao que baixa os arquivos da web para uma pasta local
-download_documentos <- function(d_frame_rec) {
+download_documentos <- function(d_frame_lista) {
   print("Executa download dos documentos da pagina Web.")
   
-  for (titulo in d_frame_rec$mes) { # Em um laco percorre todas as linhas da coluna "nome" do data frame e cria variavel titulo 
-    df_url <- select(filter(d_frame_rec, d_frame_rec$mes == titulo), "href") # seleciona e faz filtro da coluna mes onde mes for igual a variavel titulo & href
-    df_nome <- select(filter(d_frame_rec, d_frame_rec$mes == titulo), "mes") # seleciona e faz filtro da coluna mes onde mes for igual a variavel titulo & mes
+  anos <- extrai_lista_anos(URL_site)
+  
+  for (titulo in d_frame_lista$mes) { # Em um laco percorre todas as linhas da coluna "nome" do data frame e cria variavel titulo 
+    df_url <- select(filter(d_frame_lista, d_frame_lista$mes == titulo), "href") # seleciona e faz filtro da coluna mes onde mes for igual a variavel titulo & href
+    df_nome <- select(filter(d_frame_lista, d_frame_lista$mes == titulo), "mes") # seleciona e faz filtro da coluna mes onde mes for igual a variavel titulo & mes
     
-    nome_aqruivo <- nomes_arquivo(df_nome$mes) # Atribui o nome do arquivo pdf a ser baixado
-    if(file.exists(nome_aqruivo)) { # Verificar se o nome_aqruivo existe
-      print(paste0("Arquivo ja baixado: ", df_nome$mes)) # se ja existe printa o aviso, Arquivo ja baixado
-    } else { # Ou
-      if (!is.na(df_url$href)) { # Se nao existe faz o download do aqruivo pdf sem missing
-        download.file(df_url$href, destfile = nome_aqruivo, mode = "wb")
-      } else { # OU
-        print(paste("Arquivo indisponivel: ", df_nome$mes, sep = " ")) # se existir dados missing print Arquivo indisponivel
+    for(ano in anos$ano) {
+      
+      if(ano == substr(df_nome$mes, nchar(as.character(df_nome$mes))-3, nchar(as.character(df_nome$mes)))) {
+        
+        diretorio <- file.path(".", dir_arquivos, ano)
+        if(!dir.exists(diretorio)) {
+          dir.create(diretorio, recursive = TRUE)
+        } 
+        
+        nome_arquivo_completo <- nomes_arquivo(ano, df_nome$mes) # Atribui o nome do arquivo pdf a ser baixado
+        if(file.exists(nome_arquivo_completo)) { # Verificar se o arquivo existe
+          print(paste0("Arquivo ja baixado: ", df_nome$mes)) # se ja existe printa o aviso, Arquivo ja baixado
+        } else { # Ou
+          if (!is.na(df_url$href)) { # Se nao existe faz o download do aqruivo pdf sem missing
+            download.file(df_url$href, destfile = nome_arquivo_completo, mode = "wb")
+          } else { # OU
+            print(paste("Arquivo indisponivel: ", df_nome$mes, sep = " ")) # se existir dados missing print Arquivo indisponivel
+          }
+        }
+      
       }
+    
     }
+    
+  }
+}
+
+# Funcao que baixa lista de arquivos por ano 
+obtem_arquivos <- function() {
+  anos <- extrai_lista_anos(URL_site)
+  for(indice in 1:nrow(anos)) {
+    print(paste("Lendo codigo HTML da pagina Web:", anos[indice,1], "-", anos[indice,2], sep = " "))
+    # Executa a funcao que obtem um data frame com urls e nomes dos documentos
+    df_listas <- extrai_lista_documentos(anos[indice,1])
+    Sys.sleep(1)
+    # Executa a funcao que realiza o download do(s) documento(s)
+    download_documentos(df_listas)
+    Sys.sleep(10)
   }
 }
 
@@ -66,45 +132,7 @@ extrai_tabela <- function(caminho_completo_arquivo) {
 #===========================================================================================
 #                                 LIMPEZA                                      
 #-------------------------------------------------------------------------------------------
-# # Funcao generica para remover acentos
-# remove_acentos <- function(texto, padrao = "todos") {
-#   if(!is.character(texto))
-#     texto <- as.character(texto)
-#   
-#   padrao <- unique(padrao)
-#   
-#   if(any(padrao == "Ç"))
-#     padrao[padrao == "Ç"] <- "ç"
-#   
-#   acentuados <- c(
-#     acute = "áéíóúÁÉÍÓÚýÝ",
-#     grave = "àèìòùÀÈÌÒÙ",
-#     circunflex = "âêîôûÂÊÎÔÛ",
-#     tilde = "ãõÃÕñÑ",
-#     umlaut = "äëïöüÄËÏÖÜÿ",
-#     cedil = "çÇ"
-#   )
-#   
-#   sem_acentos <- c(
-#     acute = "aeiouAEIOUyY",
-#     grave = "aeiouAEIOU",
-#     circunflex = "aeiouAEIOU",
-#     tilde = "aoAOnN",
-#     umlaut = "aeiouAEIOUy",
-#     cedil = "cC"
-#   )
-#   
-#   especificos <- c("´","`","^","~","¨","ç")
-#   
-#   if(any(c("todos") %in% padrao)) 
-#     return(chartr(paste(acentuados, collapse=""), paste(sem_acentos, collapse=""), texto))
-#   
-#   for(i in which(especificos %in% padrao))
-#     texto <- chartr(acentuados[i], sem_acentos[i], texto)
-#   
-#   return(texto)
-# }
-
+# Funcao para remover acentos
 remove_acentos <- function(nm_coluna) {
   if(!is.character(nm_coluna))
     nm_coluna <- as.character(nm_coluna)
@@ -1328,7 +1356,6 @@ limpa_dados <- function(data_frame_recursos) {
   
   return(df_tabela)
 }
-
 
 #===========================================================================================
 #                             TRATAMENTO
