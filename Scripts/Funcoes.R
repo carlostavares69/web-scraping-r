@@ -92,7 +92,7 @@ download_documentos <- function(d_frame_lista) {
           print(paste0("Arquivo baixado: ", df_nome$mes)) # se ja existe printa o aviso, Arquivo ja baixado
         } else { # Ou
           if (!is.na(df_url$href)) { # Se nao existe faz o download do aqruivo pdf sem missing
-            download.file(df_url$href, destfile = nome_arquivo_completo, mode = "wb", quiet=TRUE)
+            download.file(df_url$href, destfile = nome_arquivo_completo, mode = "wb", quiet=FALSE)
           } else { # OU
             print(paste("Arquivo indisponivel: ", df_nome$mes, sep = " ")) # se existir dados missing print Arquivo indisponivel
           }
@@ -242,22 +242,22 @@ realiza_limpeza_dados <- function() {
   
   if(2018 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[1, 2], sep = " "))
-    #df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
-    #dados_crime_ce <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)
+    df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
+    dados_crime_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)
   }
   
   if(2017 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
-    dados_crime_ce <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses)
+    dados_crime_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses)
     # Faz merge de linhas do data frame.
-    dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
+    #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
 
   if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    #dados_crime_ce <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses)
+    # dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses)
     # Faz merge de linhas do data frame.
     #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
@@ -265,7 +265,7 @@ realiza_limpeza_dados <- function() {
   if(2015 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[4, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[4, 1])
-    #dados_crime_ce <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses)
+    #dados_crime_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses)
     # Faz merge de linhas do data frame.
     #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
@@ -273,18 +273,18 @@ realiza_limpeza_dados <- function() {
   if(2014 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    #dados_crime_ce <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses)
+    #dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses)
     # Faz merge de linhas do data frame.
     #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
   
-  #df_merges <- rbind(dados_2018, dados_2017, dados_2016, dados_2015, dados_2014)
+  dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, dados_crime_ce_2017)
   
   # Merge com dados geoespaciais
   #df_dados_merge_geo <- merge_dados_geo(df_merges)
   
   #return(df_dados_merge_geo)
-  return(dados_crime_ce)
+  return(dados_crime_ce_merge_anos)
 
 }
 

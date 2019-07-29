@@ -47,11 +47,11 @@ df_dados_merge <- merge_dados_geo(df_dados_limpos)
 ##############################################################################################
 
 # Execua a funcao de exportacao para o formato CSV e obtem um data frame do CSV salvo
-df_violencia_ce_2018 <- exporta_importa_csv(df_dados_merge)
+df_violencia_ce <- exporta_importa_csv(df_dados_merge)
 
 ##############################################################################################
 ## CONJUNTO DE DADOS
 ##############################################################################################
 
 # Data frame principal
-glimpse(df_violencia_ce_2018)
+glimpse(df_violencia_ce)
