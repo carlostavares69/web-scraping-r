@@ -11,8 +11,9 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
   m_tabelas <- m_tabela <- matrix()
   
   # ######################### temp
+  # ano <- lista_anos[2, 2]
   # data_frame_meses <- df_lista_meses
-  # nome <- "MAIO-2017"
+  # nome <- "JANEIRO-2017"
   # glimpse(m_tabelas)
   # View(m_tabela)
   # ######################### temp
@@ -28,7 +29,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
 
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas 
@@ -120,7 +121,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas 
@@ -217,7 +218,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas 
@@ -295,7 +296,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -377,7 +378,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -474,7 +475,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -613,7 +614,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -735,7 +736,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -846,7 +847,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Excluir tabela quebrada
@@ -934,7 +935,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
 
         # Une as tabelas extraídas
@@ -1018,7 +1019,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -1102,7 +1103,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Chama a funcao que extrai as tabelas do arquivo PDF e devolve uma matriz
         m_tabelas <- extrai_tabela(arquivo)
         
-        print(paste("Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s).", sep = " "))
+        print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
         # Une as tabelas extraídas
@@ -1158,11 +1159,15 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         # Substitui o ifen barra por NA nas linhas da coluna 8
         m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
         
+        m_tabela[575, 4] <- paste(m_tabela[574,3], m_tabela[576,3], sep = " ")
         m_tabela[588, 2] <- m_tabela[585, 2]
+        
         for (n_linha in 572:nrow(m_tabela)) {
-          NATUREZA_FATO <- substr(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-nchar(m_tabela[568, 4])+1, nchar(m_tabela[n_linha,3]))
-          m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3]) - nchar(NATUREZA_FATO)-1 )
-          m_tabela[n_linha,4] <- NATUREZA_FATO
+          if(n_linha != 575) {
+            NATUREZA_FATO <- substr(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-nchar(m_tabela[568, 4])+1, nchar(m_tabela[n_linha,3]))
+            m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3]) - nchar(NATUREZA_FATO)-1 )
+            m_tabela[n_linha,4] <- NATUREZA_FATO
+          }
         }
         
         # exclui linhas desnecessarias 
@@ -1185,7 +1190,7 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
     }
   }
   
-  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
+  print(paste("Finalizado", total_pgs, "pagina(s). ##########", sep = " ")) 
 
   # Padroniza o formato da data
   df_tabela[,6] <- df_tabela[,6] %>% gsub("-Apr-", "/04/", .) %>% gsub("-May-", "/05/", .)
