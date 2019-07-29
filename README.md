@@ -1,6 +1,6 @@
 # Indicadores Criminais SSPDS-CE  
  
-Repositório referente Raspagens de dados (Data Scraping) dos Indicadores Criminais a partir do [WebSite](https://www.sspds.ce.gov.br/) da Secretaria da Segurança Pública e Defesa Social do Estado do Ceará (SSPDS Ceará) com Branches referente aos Anos com registros diários dos Crimes Violentos Letais e Intencionais - CVLI cometidos no Estado do Ceará.
+Repositório referente Raspagens de dados (Data Scraping) dos Indicadores Criminais a partir do [WebSite](https://www.sspds.ce.gov.br/) da Secretaria da Segurança Pública e Defesa Social do Estado do Ceará (SSPDS Ceará) com registros diários dos Crimes Violentos Letais e Intencionais - CVLI cometidos no Estado do Ceará.
  
 ## Indicadores criminais 2019  
 INDICADORES CRIMINAIS **2019** - https://www.sspds.ce.gov.br/estatisticas-2/
