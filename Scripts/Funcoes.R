@@ -45,11 +45,13 @@ extrai_lista_documentos <- function(url_pagina) {
   df_lista_titulos <- pagina_html %>% #obtem codigo html da pagina
     rvest::html_nodes('.-Verde h3') %>% # Filtro das tags "h3" (nomes dos meses de cada link)desejadas
     rvest::html_text() %>% # Converte a relacao de nomes em texto
+    remove_acentos(.) %>% # Remove acentos
     gsub("–", " - ", .) %>% # Substitui travessao longo por ifen com espaco 
     gsub("/", " - ", .) %>% # Substitui barras por travessao com espaco 
     gsub(" ", "", .) %>% # Substitui espaco com travessao por travessao sem espaco
     as.data.frame(.) %>% # Converte a lista de titulos em data frame
-    setNames(., "mes") # O "." significa trazer o data frame anterior e e atribui o nome "mes" da coluna do dataframe
+    setNames(., "mes") # O "." significa trazer o data frame anterior e e atribui o nome "mes" da coluna do dataframe 
+    
   
   # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
   df_urls_nomes <- data.frame(df_lista_urls, df_lista_titulos) 
@@ -63,7 +65,7 @@ extrai_lista_documentos <- function(url_pagina) {
 
 # Funcao que formata o nome dos arquivos
 obtem_nome_arquivos <- function(dir_superior, nome_relacao) {
-  nome_arquivo = gsub("[/. ,]","_", nome_relacao)
+  nome_arquivo <- nome_relacao %>% gsub("[/. ,]","_", .)
   path <- file.path(".", dir_arquivos, dir_superior, paste0(nome_arquivo, ".pdf"))
   
   return(path)
@@ -231,8 +233,9 @@ remove_acentos <- function(nm_coluna) {
 }
 
 # Funcao que obtem matrix de tabelas
-extrai_tabela <- function(caminho_completo_arquivo) {
-  return(extract_tables(file = caminho_completo_arquivo, method = "decide", encoding = "UTF-8"))
+extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
+  return(extract_tables(file = caminho_completo_arquivo, area = areas_tabela, guess = FALSE, encoding = "UTF-8"))
+  #return(extract_tables(file = caminho_completo_arquivo, method = "decide", encoding = "UTF-8"))
 }
 
 realiza_limpeza_dados <- function() {
@@ -250,16 +253,12 @@ realiza_limpeza_dados <- function() {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
     dados_crime_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses)
-    # Faz merge de linhas do data frame.
-    #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
 
   if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    # dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses)
-    # Faz merge de linhas do data frame.
-    #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
+    dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses)
   }
   
   if(2015 %in% vetor_anos) {
@@ -278,7 +277,7 @@ realiza_limpeza_dados <- function() {
     #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
   }
   
-  dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, dados_crime_ce_2017)
+  dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, dados_crime_ce_2017, dados_crime_ce_2016)
   
   # Merge com dados geoespaciais
   #df_dados_merge_geo <- merge_dados_geo(df_merges)

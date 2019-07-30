@@ -23,6 +23,7 @@ source(file = file.path(".", "Scripts/Funcoes.R"), encoding = "UTF-8")
 # Includes das funcoes utilizadas nas limpezas dos dados
 source(file = file.path(".", "Scripts/Funcao_limpa_dados_2018.R"), encoding = "UTF-8") 
 source(file = file.path(".", "Scripts/Funcao_limpa_dados_2017.R"), encoding = "UTF-8") 
+source(file = file.path(".", "Scripts/Funcao_limpa_dados_2016.R"), encoding = "UTF-8") 
 
 ##############################################################################################
 ## COLETA DOS DADOS
