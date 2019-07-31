@@ -12,7 +12,7 @@ nome_arquivo <- c("Indicadores_Crimes_CE_2014-2018")
 arquivo_csv <- nome_arquivo
 
 # Pacotes utilizados na analise.
-pacotes_analise <- c("tidyverse","tabulizer","readr","stringi","rgdal","kableExtra")
+pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","rgdal","kableExtra")
 
 ##############################################################################################
 ## CONFIGURACOES DO RSTUDIO
@@ -34,6 +34,8 @@ dir_dados <- c("Dados")
 dir_graficos <- c("Graficos")
 dir_scripts <- c("Scripts")
 dir_docs <- c("Documentos")
+sub_dir1 <- paste(dir_auxiliares, "Documentos Padronizados", sep = "/")
+sub_dir2 <- paste(sub_dir1, "Docs Reformatados", sep = "/")
 
 # Vetor contendo o camainho absoluto dos diretorios
 diretorios <- c(dir_auxiliares, dir_arquivos, dir_dados, dir_graficos, dir_scripts, dir_docs)
@@ -71,7 +73,9 @@ print(suppressMessages(library(tinytex)))
 # Carregamento de pacotes analise
 print(suppressMessages(library(tidyverse)))
 print(suppressMessages(library(tabulizer)))
+print(suppressMessages(library(rvest)))
 print(suppressMessages(library(readr)))
 print(suppressMessages(library(stringi)))
+print(suppressMessages(library(readxl)))
 print(suppressMessages(library(rgdal)))
 print(suppressMessages(library(kableExtra)))

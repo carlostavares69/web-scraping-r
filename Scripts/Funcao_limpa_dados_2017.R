@@ -304,7 +304,8 @@ limpa_dados_2017 <- function(ano, data_frame_meses) {
         
         # Inclui coluna AIS faltante com variaveis NA e reordena 
         m_tabela <- cbind(m_tabela, c(NA)) %>% .[, c(1,10,2,3,4,5,6,7,8,9)]
-        m_tabela[2,2] <- c("AIS") # Atribui nome da coluna
+        # Atribui titulo da coluna
+        m_tabela[2,2] <- c("AIS") 
         
         # concatena o titulo fragmentado da coluna 8 e padroniza
         m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])

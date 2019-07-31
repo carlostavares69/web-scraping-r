@@ -215,12 +215,6 @@ corrige_variavel <- function(num_col, tit_coluna, tb_matrix) {
     print(paste("Linhas com valores quebrados da coluna:", num_col, sep = " "))
   }
   
-  # 
-  # for (num in 1:length(linhas)) {
-  #   print(paste("Linha:", linhas[num], "Corrigido variavel para:", paste(tb_matrix[linhas[num]-1, num_col], tb_matrix[linhas[num]+1, num_col], sep = " "), sep = " "))
-  #   tb_matrix[linhas[num], num_col] <- paste(tb_matrix[linhas[num]-1, num_col], tb_matrix[linhas[num]+1, num_col], sep = " ")
-  # }
-  
   return(linhas)
 }
 
@@ -270,15 +264,14 @@ realiza_limpeza_dados <- function() {
   if(2014 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    #dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses)
-    # Faz merge de linhas do data frame.
-    #dados_crime_ce <- dados_crime_ce %>% rbind(., as.data.frame(dados_crime_ce))
+    dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses)
   }
   
   dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, 
                                      dados_crime_ce_2017, 
                                      dados_crime_ce_2016, 
-                                     dados_crime_ce_2015)
+                                     dados_crime_ce_2015,
+                                     dados_crime_ce_2014)
   
   # Merge com dados geoespaciais
   #df_dados_merge_geo <- merge_dados_geo(df_merges)

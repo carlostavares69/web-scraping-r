@@ -25,6 +25,7 @@ source(file = file.path(".", "Scripts/Funcao_limpa_dados_2018.R"), encoding = "U
 source(file = file.path(".", "Scripts/Funcao_limpa_dados_2017.R"), encoding = "UTF-8") 
 source(file = file.path(".", "Scripts/Funcao_limpa_dados_2016.R"), encoding = "UTF-8") 
 source(file = file.path(".", "Scripts/Funcao_limpa_dados_2015.R"), encoding = "UTF-8") 
+source(file = file.path(".", "Scripts/Funcao_limpa_dados_2014.R"), encoding = "UTF-8") 
 
 ##############################################################################################
 ## COLETA DOS DADOS
