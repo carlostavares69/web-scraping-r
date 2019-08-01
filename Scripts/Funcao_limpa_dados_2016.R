@@ -1021,11 +1021,12 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
       } 
     }
   }
-  
-  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
 
   # Padroniza o formato da data
-  df_tabela[,6] <- df_tabela[,6] %>% gsub("-Feb-", "/02/", .) %>% gsub("-Apr-", "/04/", .) %>% gsub("-May-", "/05/", .)
+  df_tabela[,6] <- df_tabela[,6] %>% gsub("-Feb-", "/02/", .)
+  
+  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
+  print(paste(nrow(df_tabela), "Linhas", sep = " ")) 
   
   return(df_tabela)
 }

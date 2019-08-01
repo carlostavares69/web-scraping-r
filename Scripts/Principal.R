@@ -40,6 +40,7 @@ obtem_arquivos()
 
 # Executa a funcao de limpeza dos dados e obtem um data frame com dados para analises com "tabulizer"
 df_dados_limpos <- realiza_limpeza_dados()
+nrow(df_dados_limpos)
 View(df_dados_limpos)
 
 # Merge com dados geoespaciais

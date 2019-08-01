@@ -1035,8 +1035,6 @@ limpa_dados_2015 <- function(ano, data_frame_meses) {
       } 
     }
   }
-  
-  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
 
   # Padroniza o formato da data
   df_tabela[,6] <- df_tabela[,6] %>% 
@@ -1049,6 +1047,9 @@ limpa_dados_2015 <- function(ano, data_frame_meses) {
     gsub("-Sep-", "/09/", .) %>% 
     gsub("-Oct-", "/10/", .) %>% 
     gsub("-Dec-", "/12/", .)
+  
+  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
+  print(paste(nrow(df_tabela), "Linhas", sep = " ")) 
   
   return(df_tabela)
 }

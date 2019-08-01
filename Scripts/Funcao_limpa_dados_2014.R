@@ -8,8 +8,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
   print(paste("Definindo estrutura de limpeza para", nrow(data_frame_meses[2]), "meses.", sep = " "))
   
   df_nome_docs <- rbind(data_frame_meses[2])
-  m_tabelas <- m_tabela <- matrix()
-  
+
   total_pgs <- 0
   
   for (num_doc in 1:nrow(df_nome_docs)) {
@@ -22,8 +21,12 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         arquivo <- file.path(".", sub_dir1, paste0(nome, ".xlsx"))
         m_tabela <- suppressMessages(readxl::read_xlsx(path = arquivo, col_names = FALSE, skip = 2))
         
-        # Inclui coluna ID faltante com variaveis numerica e reordena 
-        m_tabela <- m_tabela %>% cbind(., ...0 = c(1:nrow(.))) %>% .[, c(10,1,2,3,4,5,6,7,8,9)]
+        print(paste("########## Extraindo tabelas de", nome, "contendo", nrow(m_tabela), "linha(s). ##########", sep = " "))
+        
+        # Inclui coluna ID faltante com variaveis numerica, reordena
+        m_tabela <- m_tabela %>% cbind(., ...0 = c(1:nrow(.))) %>% .[, c(10,1,2,3,4,5,6,7,8,9)] 
+        # Padroniza cabecalhos
+        names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
         
         # Substitui o ifen barra por NA nas linhas da coluna 8 e 10
         for (linha in rev(1:nrow(m_tabela))) {
@@ -42,13 +45,20 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
             m_tabela[linha,9] <- "Feminino"
           }
         }
-        
+
+        # converte em data frame.
+        df_tabela <- as.data.frame(m_tabela)
       }
       
       if (num_doc == 2) {
         # Importanto do arquivo EXCEL previamente convertido do PDF
         arquivo <- file.path(".", sub_dir1, paste0(nome, ".xlsx"))
         m_tabela <- suppressMessages(readxl::read_xlsx(path = arquivo, col_names = FALSE, skip = 2))
+        
+        print(paste("########## Extraindo tabelas de", nome, "contendo", nrow(m_tabela), "linha(s). ##########", sep = " "))
+        
+        # Padroniza cabecalhos
+        names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
         
         # Corrige variaveis de linhas com valores quebrados
         m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
@@ -83,6 +93,11 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         arquivo <- file.path(".", sub_dir1, paste0(nome, ".xlsx"))
         m_tabela <- suppressMessages(readxl::read_xlsx(path = arquivo, col_names = FALSE, skip = 2))
         
+        print(paste("########## Extraindo tabelas de", nome, "contendo", nrow(m_tabela), "linha(s). ##########", sep = " "))
+        
+        # Padroniza cabecalhos
+        names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
+        
         # Corrige variaveis de linhas com valores quebrados
         m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
 
@@ -103,54 +118,62 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
             m_tabela[linha,9] <- "Feminino"
           }
         }
-        
+
         # faz merge de linhas do data frame anterior.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
       }
       
       if (num_doc == 4) {
-        # Importanto do arquivo EXCEL previamente convertido do PDF
-        arquivo <- file.path(".", sub_dir1, paste0(nome, ".xlsx"))
-        m_tabela <- suppressMessages(readxl::read_xlsx(path = arquivo, col_names = FALSE, skip = 2))
-        
-        # Corrige variaveis de linhas com valores quebrados
-        m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 5, 8 e 10
-        for (linha in rev(1:nrow(m_tabela))) {
-          if(!is.na(m_tabela[linha,5])) {
-            if(m_tabela[linha,5] == "-") {
-              m_tabela[linha,5] <- NA
+          # Importanto do arquivo EXCEL previamente convertido do PDF
+          arquivo <- file.path(".", sub_dir1, paste0(nome, ".xlsx"))
+          m_tabela <- suppressMessages(readxl::read_xlsx(path = arquivo, col_names = FALSE, skip = 2))
+          
+          print(paste("########## Extraindo tabelas de", nome, "contendo", nrow(m_tabela), "linha(s). ##########", sep = " "))
+          
+          # Padroniza cabecalhos
+          names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
+          
+          # Corrige variaveis de linhas com valores quebrados
+          m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
+          
+          # Substitui o ifen barra por NA nas linhas da coluna 5, 8 e 10
+          for (linha in rev(1:nrow(m_tabela))) {
+            if(!is.na(m_tabela[linha,5])) {
+              if(m_tabela[linha,5] == "-") {
+                m_tabela[linha,5] <- NA
+              }
+            }
+            if(!is.na(m_tabela[linha,8])) {
+              if(m_tabela[linha,8] == "-" | m_tabela[linha,8] == "-/") {
+                m_tabela[linha,8] <- NA
+              }
+            }
+            if(!is.na(m_tabela[linha,10])) {
+              if(m_tabela[linha,10] == "-") {
+                m_tabela[linha,10] <- NA
+              }
+            }
+            # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
+            if(!is.na(m_tabela[linha,9])) {
+              if(m_tabela[linha,9] == "M") {
+                m_tabela[linha,9] <- "Masculino"
+              } else {
+                m_tabela[linha,9] <- "Feminino"
+              }
+            }
+            # exclui linha irrelevante
+            if(is.na(m_tabela[linha,1])) {
+              m_tabela <- m_tabela[-c(linha),]
             }
           }
-          if(!is.na(m_tabela[linha,8])) {
-            if(m_tabela[linha,8] == "-" | m_tabela[linha,8] == "-/") {
-              m_tabela[linha,8] <- NA
-            }
-          }
-          if(!is.na(m_tabela[linha,10])) {
-            if(m_tabela[linha,10] == "-") {
-              m_tabela[linha,10] <- NA
-            }
-          }
-          # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-          if(!is.na(m_tabela[linha,9])) {
-            if(m_tabela[linha,9] == "M") {
-              m_tabela[linha,9] <- "Masculino"
-            } else {
-              m_tabela[linha,9] <- "Feminino"
-            }
-          }
-          # exclui linha irrelevante
-          if(is.na(m_tabela[linha,1])) {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
-        
-        # faz merge de linhas do data frame anterior.
-        df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+  
+          # faz merge de linhas do data frame anterior.
+          df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+          
+          # Padroniza o formato da data para caractere
+          df_tabela$V6 <- as.character(format.Date(df_tabela$V6, format = "%d/%m/%Y"))
       }
-      
+
       if (num_doc == 5) {
         # Usar locate_areas(file = arquivo, pages = 1, resolution = 100L, widget = c("native"))
         # para obter a lista da area padrao para o restante das paginas do documento
@@ -225,7 +248,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
             m_tabela <- m_tabela[-c(linha),]
           }
         }
-        
+
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
       }
@@ -1099,21 +1122,19 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
     }
   }
 
-  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
-
   # Padroniza o formato da data
   df_tabela[,6] <- df_tabela[,6] %>% 
-    gsub("-jan-", "/01/", .) %>% 
-    gsub("-mar-", "/03/", .) %>% 
-    gsub(".04.", "/04/", .) %>% 
-    gsub("-mai-14", "/05/2014", .) %>% 
-    gsub("/jun/", "/07/", .) %>% 
+    gsub("/mai/14", "/05/2014", .) %>% 
+    gsub("/jun/14", "/06/2014", .) %>% 
     gsub("-jul-", "/07/", .) %>% 
     gsub("-Aug-", "/08/", .) %>% 
     gsub("-Sep-", "/09/", .) %>% 
     gsub("-out-", "/10/", .) %>% 
     gsub("-nov-", "/11/", .) %>% 
     gsub("-dez-", "/12/", .)
+  
+  print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
+  print(paste(nrow(df_tabela), "Linhas", sep = " ")) 
   
   return(df_tabela)
 }
