@@ -280,4 +280,3 @@ realiza_limpeza_dados <- function() {
   return(dados_crime_ce_merge_anos)
 
 }
-

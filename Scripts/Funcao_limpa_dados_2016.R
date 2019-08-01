@@ -9,15 +9,7 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
   
   df_nome_docs <- rbind(data_frame_meses[2])
   m_tabelas <- m_tabela <- matrix()
-  
-  # ######################### temp
-  # ano <- lista_anos[3, 2]
-  # data_frame_meses <- df_lista_meses
-  # nome <- "JANEIRO-2016"
-  # glimpse(m_tabelas)
-  # View(m_tabela)
-  # ######################### temp
-  
+
   total_pgs <- 0
   
   for (num_doc in 1:nrow(df_nome_docs)) {
