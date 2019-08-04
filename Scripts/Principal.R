@@ -1,42 +1,10 @@
 ##############################################################################################
 ## RASPAGEM DE DADOS (Data Scraping)
 ##
-## Autor: Erivando Sena
-## Data:  03/08/2019
-##############################################################################################
-
-##############################################################################################
-## RASPAGEM DE DADOS (Data Scraping):
-## Data scraping é uma técnica computacional na qual um programa extrai dados de saída legível 
-## somente para humanos, proveniente de um serviço ou aplicativo. Os dados extraídos 
-## geralmente são minerados e estruturados em um formato padrão como CSV, XLSX, etc.
+## Autor:   Erivando Sena
+## E-mail:  erivandosena@gmail.com 
+## Data:    03/08/2019
 ##
-## LOCAL ALVO DOS DADOS: 
-## "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2/"
-##
-## OBJETIVO GERAL: 
-## Através da técnica de raspagem de dados, extrair informações dos indicadores criminais 
-## diários entre anos de 2014 a 2018 do site da Secretaria da Segurança Pública e Defesa 
-## Social do Estado do Ceará (SSPDS Ceará).
-##
-## OBJETIVOS ESPECÍFICOS:
-## 1. Possibilitar à fácil compreensão das informações disponibilizadas em determinado site 
-## gonvernamental por meio de uma análise visual dos dados.
-##
-## 2. Servir como modelo e fonte de aprendizado para pessoas com interesse em explorar mais 
-## esse tipo de informação.
-##
-## 3. Motivar a comunidade Open Data a contribuir com diversos outros projetos.
-##
-## FASES IMPORTANTES DO MÉTODO:
-## O projeto de Raspagem dos Dados é divido em três principais partes: 
-## Coleta, Limpeza, Tratamento, Análise e Visualização dos Dados. 
-##
-## AMBIENTE COMPUTACIONAL UTILIZADO:
-## Software R, RStudio para o desenvolvimento integrado utilizando linguagem de programação 
-## R para computação estatística.
-##############################################################################################
-
 ##############################################################################################
 ## LIMPEZA DA MEMORIA
 ##############################################################################################
