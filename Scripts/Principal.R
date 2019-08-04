@@ -81,9 +81,24 @@ df_crime_ce_2014_2018 <- padroniza_dados(df_crime_ce_2014_2018)
 # Merge com dados geoespaciais
 df_crime_ce_2014_2018 <- merge_dados_geo(df_crime_ce_2014_2018)
 
+# Merge com incidencia de crime
+df_crime_ce_2014_2018 <- merge_dados_incidencia_crime(df_crime_ce_2014_2018)
+
+# Merge com censo populacional
+df_crime_ce_2014_2018 <- merge_dados_populacao(df_crime_ce_2014_2018)
+
+# Merge com dados IDH-M
+df_crime_ce_2014_2018 <- merge_dados_idhm(df_crime_ce_2014_2018)
+
+# Merge com dados PIB percapita
+df_crime_ce_2014_2018 <- merge_dados_pib(df_crime_ce_2014_2018)
+
 ##############################################################################################
 ## CONJUNTO DE DADOS PARA ANALISES
 ##############################################################################################
+
+# Exporta para CSV
+exporta_csv(df_crime_ce_2014_2018, "Indicadores_Crimes_CE_2014-2018_Merges.csv")
 
 # Data frame geral
 glimpse(df_crime_ce_2014_2018)

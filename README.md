@@ -24,9 +24,22 @@ Através da técnica de raspagem de dados, extrair informações dos documentos 
 
 ## FASES IMPORTANTES DO MÉTODO
 
-O projeto de Raspagem dos Dados é divido em cinco principais partes: 
+O processo da Raspagem de Dados é divido em cinco principais partes: 
 **Coleta**, **Limpeza**, **Tratamento**, **Análise** e **Visualização** dos Dados. 
 
 ## AMBIENTE COMPUTACIONAL UTILIZADO
 
-Software R, RStudio para o desenvolvimento integrado utilizando linguagem de programação R para computação estatística.
+**Software R**, IDE **RStudio** para o desenvolvimento integrado utilizando **linguagem de programação R** para computação estatística.
+
+
+# REFERÊNCIAS
+
+R Core Team (2019). **R: A language and environment for statistical computing.** R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.  
+  
+RStudio Team (2018). **RStudio: Integrated Development for R.** RStudio, Inc., Boston, MA URL http://www.rstudio.com/.  
+
+JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2019). **rmarkdown: Dynamic Documents for R.** R package version 1.13. URL https://rmarkdown.rstudio.com.  
+
+Yihui Xie and J.J. Allaire and Garrett Grolemund (2018). **R Markdown: The Definitive Guide.** Chapman and Hall/CRC. ISBN 9781138359338. URL https://bookdown.org/yihui/rmarkdown.  
+
+Kevin Ushey, Jonathan McPherson, Joe Cheng, Aron Atkins and JJ Allaire (2018). **packrat: A Dependency Management System for Projects and their R Package Dependencies.** R package version 0.5.0. https://CRAN.R-project.org/package=packrat  

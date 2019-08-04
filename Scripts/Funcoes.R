@@ -107,6 +107,11 @@ download_documentos <- function(d_frame_lista) {
   }
 }
 
+# Funcao que obtem matrix de tabelas
+extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
+  return(extract_tables(file = caminho_completo_arquivo, area = areas_tabela, guess = FALSE, encoding = "UTF-8"))
+}
+
 # Funcao que baixa lista de arquivos por ano 
 obtem_arquivos <- function() {
   anos <- extrai_lista_anos(URL_site)
@@ -122,56 +127,7 @@ obtem_arquivos <- function() {
   }
 }
 
-#===========================================================================================
-#                             TRATAMENTO
-#-------------------------------------------------------------------------------------------
-# funcao para geocodificar conjunto de dados
-merge_dados_geo <- function(df_dados) {
-  # ftp://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/Shapefile_SHP/
-  # Importando o arquivo Shapefile com informacoes geograficas e coordenadas GPS
-  dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
-  
-  # Filtro por municipios do Ceara
-  df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
-    as.data.frame(.) %>% 
-    select(., LONG, LAT, NM_MUNICIP) %>%  # 
-    rename(LONGITUDE = LONG) %>% 
-    rename(LATITUDE = LAT) %>%
-    mutate(NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
-    mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
-
-  # Converte variavel para maiusculo
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = remove_acentos(toupper(MUNICIPIO_CRIME)))
-  
-  # verifica inconsistencia entre as colunas de merge
-  inconsistencias <- setdiff(remove_acentos(df_dados$MUNICIPIO_CRIME), remove_acentos(df_geo$NM_MUNICIP))
-  ifelse(length(inconsistencias) > 0, print(paste("Inconsistencia tratada:", inconsistencias, sep = " ")), print("Sem inconsistencias"))
-
-  for(nlinha in 1:nrow(df_dados)) {
-    if(!is.na(df_dados[nlinha, 1])) {
-      if ("ITAPAJE" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[1]) df_dados[nlinha, 1] <- "ITAPAGE"
-      }
-      if ("NOVA JAGUARIBARA" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[2]) df_dados[nlinha, 1] <- "JAGUARIBARA"
-      }
-      if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[3]) df_dados[nlinha, 1] <- "DEPUTADO IRAPUAN PINHEIRO"
-      }
-    }
-  }
-  
-  # Merge dos data frames com geolocalizacao por municipio
-  df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_CRIME'), by.y=c('NM_MUNICIP'))
-  
-  # Restaura formato da coluna Municipio
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
-
-  # retorna dadta frame
-  return(df_merge) 
-}
-
-# Funcao que cria um arquivo CSV
+# Funcao que convert data frame em arquivo CSV
 exporta_csv <- function(df_limpo, nome_csv=NA) {
   # classes dos tipos de colunas
   classes_colunas <- sapply(df_limpo, class)
@@ -187,6 +143,7 @@ exporta_csv <- function(df_limpo, nome_csv=NA) {
   readr::write_excel_csv2(x = df_limpo, path = nome_arquivo_csv, na = "NA", col_names = TRUE, delim = ";")
 }
 
+# Funcao que obtem dados do arquivo CSV
 importa_csv <- function(arquivo_csv) {
   # classes dos tipos de colunas
   classes_colunas <- cols(ID = col_number(), 
@@ -221,11 +178,6 @@ remove_acentos <- function(obj_str) {
   obj_str <- stringi::stri_trans_general(str = obj_str, "latin-ascii")
   
   return(obj_str)
-}
-
-# Funcao que obtem matrix de tabelas
-extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
-  return(extract_tables(file = caminho_completo_arquivo, area = areas_tabela, guess = FALSE, encoding = "UTF-8"))
 }
 
 # Funcao para padronizar o formato dos dados
@@ -453,3 +405,152 @@ realiza_limpeza_dados <- function() {
   return(dados_crime_ce_merge_anos)
 }
 
+#===========================================================================================
+#                             TRATAMENTO
+#-------------------------------------------------------------------------------------------
+
+# Funcao que compara diferencas entre duas colunas e retona uma lista
+verifica_inconsistencias <- function(df_col1, df_col2) {
+  # verifica inconsistencia entre as colunas de merge
+  inconsistencias <- lubridate::setdiff(df_col1, df_col2)
+  ifelse(length(inconsistencias) > 0, print(paste("Inconsistencia tratada:", inconsistencias, sep = " ")), print("Sem inconsistencias"))
+  return(inconsistencias)
+}
+
+# funcao para geocodificar conjunto de dados
+merge_dados_geo <- function(df_dados) {
+  # ftp://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/Shapefile_SHP/
+  # Importando o arquivo Shapefile com informacoes geograficas e coordenadas GPS
+  dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
+  
+  # Filtro por municipios do Ceara
+  df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
+    as.data.frame(.) %>% 
+    select(., LONG, LAT, NM_MUNICIP) %>%  # 
+    rename(LONGITUDE = LONG) %>% 
+    rename(LATITUDE = LAT) %>%
+    mutate(NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+    mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
+
+  # Converte variavel para maiusculo e remove acentuacao
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = remove_acentos(toupper(MUNICIPIO_CRIME)))
+  
+  # Verifica inconsistencia entre as colunas de merge
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, df_geo$NM_MUNICIP)
+  # inconsistencias <- setdiff(remove_acentos(df_dados$MUNICIPIO_CRIME), remove_acentos(df_geo$NM_MUNICIP))
+  # ifelse(length(inconsistencias) > 0, print(paste("Inconsistencia tratada:", inconsistencias, sep = " ")), print("Sem inconsistencias"))
+
+  for(nlinha in 1:nrow(df_dados)) {
+    if(!is.na(df_dados[nlinha, 1])) {
+      if ("ITAPAJE" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[1]) df_dados[nlinha, 1] <- "ITAPAGE"
+      }
+      if ("NOVA JAGUARIBARA" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[2]) df_dados[nlinha, 1] <- "JAGUARIBARA"
+      }
+      if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[3]) df_dados[nlinha, 1] <- "DEPUTADO IRAPUAN PINHEIRO"
+      }
+    }
+  }
+  
+  # Merge dos data frames com geolocalizacao por municipio
+  df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_CRIME'), by.y=c('NM_MUNICIP'))
+  
+  # Restaura formato da coluna MUNICIPIO_CRIME
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+
+  # retorna dadta frame
+  return(df_merge) 
+}
+
+# Funcao para merge da incidencia de crime por municipio
+merge_dados_incidencia_crime <- function(df_dados) {
+
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  
+  df_incidencia <- df_dados %>%
+    group_by(MUNICIPIO_CRIME) %>%
+    summarise(INCIDENCIA_CRIME = n()) %>%
+    distinct()
+
+  # Verifica inconsistencia entre as colunas de merge
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, df_incidencia$MUNICIPIO_CRIME)
+  
+  df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO_CRIME'))
+  
+  # Restaura formato da coluna MUNICIPIO_CRIME
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  
+  return(df_merge)
+}
+
+# Funcao para merge de coluna de indice populacional 
+merge_dados_populacao <- function(df_dados) {
+  censo_pop <- suppressMessages(readxl::read_xls(
+    file.path(".", dir_auxiliares, "Censo_Demografico_2010/total_populacao_ceara.xls"), col_names = FALSE))[2:185,][,-c(1,3,4,5,6,7)] %>% 
+    rename(MUNICIPIO = "...2", POPULACAO = "...8") %>% 
+    mutate_if(is.character, str_to_upper) %>% 
+    mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
+
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  
+  # Verifica inconsistencia entre as colunas de merge
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, censo_pop$MUNICIPIO)
+  
+  # Merge dos data frames com populacao por municipio
+  df_merge <- merge(df_dados, censo_pop, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  
+  # Restaura formato da coluna MUNICIPIO_CRIME
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  
+  return(df_merge)
+}
+
+# Funcao para merge de coluna do IDH
+merge_dados_idhm <- function(df_dados) {
+  idhm <- suppressMessages(readxl::read_xlsx(
+    file.path(".", dir_auxiliares, "Atlas_Desenvolvimento_Humano_Brasil_2010/AtlasBrasil_Consulta.xlsx"), col_names = FALSE))[3:186,][,c(2:3)] %>% 
+    rename(MUNICIPIO = "...2", IDHM = "...3") %>% 
+    mutate_if(is.character, str_to_upper) %>% # se for caractere converte para maisuculo 
+    mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
+  
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  
+  # Verifica inconsistencia entre as colunas de merge
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, idhm$MUNICIPIO)
+  
+  # Merge dos data frames com IDH por municipio
+  df_merge <- merge(df_dados, idhm, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  
+  # Restaura formato da coluna MUNICIPIO_CRIME
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  
+  return(df_merge)
+}
+
+# Funcao para merge de coluna do PIB
+merge_dados_pib <- function(df_dados) {
+  pib_percapita <- suppressMessages(readxl::read_xls(
+    file.path(".", dir_auxiliares, "Pib_Municipios_2010/PibMunicipal2006_2010.xls"), col_names = FALSE))[913:1096,][,-c(2:6)] %>% 
+    rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
+    mutate_if(is.character, str_to_upper) %>% 
+    mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
+  
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  
+  # Verifica inconsistencia entre as colunas de merge
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, pib_percapita$MUNICIPIO)
+  
+  # Merge dos data frames com PIB por municipio
+  df_merge <- merge(df_dados, pib_percapita, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  
+  # Restaura formato da coluna MUNICIPIO_CRIME
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  
+  return(df_merge)
+}
