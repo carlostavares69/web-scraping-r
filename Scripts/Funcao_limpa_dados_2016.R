@@ -8,8 +8,6 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
   print(paste("Definindo estrutura de limpeza para", nrow(data_frame_meses[2]), "meses.", sep = " "))
   
   df_nome_docs <- rbind(data_frame_meses[2])
-  m_tabelas <- m_tabela <- matrix()
-
   total_pgs <- 0
   
   for (num_doc in 1:nrow(df_nome_docs)) {
@@ -30,70 +28,9 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
-        
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
-        
-        # limpa caracteres indesejados e padroniza titulos para obter cabecalho
-        m_tabela_cabecalho <- m_tabela[2,]  %>% 
-          gsub("-/", "_", .) %>% 
-          gsub("-", "_", .) %>% 
-          gsub(" ", "_", .) %>% 
-          gsub("^\\s+|\\s+$", "", .) %>%  remove_acentos(.)
 
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # Corrige variaveis de linhas com valores fragmentados 
-        # m_tabela[432,2] <- m_tabela[429,2]
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
 
         #Corrige variaveis de linhas com valores quebrados
         for (n_linha in 416:nrow(m_tabela)) {
@@ -102,15 +39,16 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
             m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3]) - nchar(NATUREZA_FATO)-1 )
         }
         
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
+        
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
 
         # converte matriz em data frame.
         df_tabela <- as.data.frame(m_tabela)
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 2) {
@@ -126,60 +64,9 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
-        
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
       
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
 
         # Corrige variaveis de linhas com valores fragmentados 
         m_tabela[381,4] <- paste(m_tabela[380,3], m_tabela[382,3], sep = " ")
@@ -193,16 +80,17 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
             m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3]) - nchar(NATUREZA_FATO)-1 )
           }
         }
-
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
+        
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 3) {
@@ -219,69 +107,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 4) {
@@ -298,69 +136,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 5) {
@@ -377,60 +165,9 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
-        
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
+
         # Corrige variaveis de linhas com valores quebrados
         for (n_linha in 348:372) {
           NATUREZA_FATO <- substr(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-15, nchar(m_tabela[n_linha,3]))
@@ -438,15 +175,16 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3]) - nchar(NATUREZA_FATO)-1 )
         }
         
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
+        
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 6) {
@@ -463,69 +201,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 7) {
@@ -542,60 +230,9 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
-        
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
+
         # Corrige variaveis de linhas com valores quebrados
         for (n_linha in 320:nrow(m_tabela)) {
           NATUREZA_FATO <- substr(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-15, nchar(m_tabela[n_linha,3]))
@@ -604,15 +241,16 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         }
         m_tabela[323,3] <- paste(m_tabela[322,4], m_tabela[324,4], sep = " ")
         
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
+        
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 8) {
@@ -629,69 +267,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 9) {
@@ -708,69 +296,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 10) {
@@ -787,69 +325,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 11) {
@@ -866,60 +354,9 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
-        
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
+
         # Corrige variaveis de linhas com valores quebrados
         m_tabela[384,4] <- m_tabela[384,3]
         for (n_linha in 376:390) {
@@ -930,15 +367,16 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         m_tabela[384,3] <-  m_tabela[246,3]
         m_tabela[393,4] <- paste(m_tabela[392,3], m_tabela[394,3], sep = " ")
         
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
+        
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       }
       
       if (num_doc == 12) {
@@ -955,69 +393,19 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
-        # concatena o titulo fragmentado da coluna 8 e padroniza
-        m_tabela[2,8] <- paste0(m_tabela[1,8], m_tabela[3,8])
+        # Concatena valores fragmentados das colunas 2, 3, 4 e 7
+        m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 2
-        coluna <- c(2)
-        linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
+        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        m_tabela <- corrige_variaveis_matriz(m_tabela)
         
-        # concatena valores fragmentados da coluna coluna 3
-        coluna <- c(3)
-        linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 4
-        coluna <- c(4)
-        linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # concatena valores fragmentados da coluna coluna 7
-        coluna <- c(7)
-        linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
-        if(!is.null(linhas)) {
-          for (num in 1:length(linhas)) {
-            var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
-            print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
-            m_tabela[linhas[num], coluna] <- var_correcao
-          }
-        }
-        
-        # Substitui o ifen barra por NA nas linhas da coluna 8
-        m_tabela[,8] <- m_tabela[,8] %>% gsub("-/", NA, .)
-        # Substitui o ifen por NA nas linhas da coluna 10
-        m_tabela[,10] <- m_tabela[,10] %>% gsub("-", NA, .)
-        # Substitui o F ou M por Masculino ou Feminino nas linhas da coluna 9
-        m_tabela[,9] <- m_tabela[,9] %>% gsub("M", "Masculino", .) %>% gsub("F", "Feminino", .)
-        
-        # exclui linhas desnecessarias 
-        for (linha in rev(1:length(m_tabela[,1]))) {
-          if(m_tabela[linha] == "" | m_tabela[linha] == "ID") {
-            m_tabela <- m_tabela[-c(linha),]
-          }
-        }
+        # Exclui linhas desnecessarias 
+        m_tabela <- exclui_linhas_matriz(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
+        
+        print(paste("Concluido com",nrow(m_tabela), "Linhas", sep = " "))
       } 
     }
   }

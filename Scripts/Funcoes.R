@@ -131,65 +131,137 @@ merge_dados_geo <- function(df_dados) {
   # Importando o arquivo Shapefile com informacoes geograficas e coordenadas GPS
   dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
   
-  #colunas utilizadas
-  colunas <- c('LONG', 'LAT', 'NM_MUNICIP')
-  
   # Filtro por municipios do Ceara
-  dados_shp[which(dados_shp$CD_NIVEL == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
-    as.data.frame(.) %>% # cria data frame
-    select(., colunas) %>% # obtem variaveis relevantes 
-    mutate_if(is.factor, as.character) -> df_geo
+  df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
+    as.data.frame(.) %>% 
+    select(., LONG, LAT, NM_MUNICIP) %>%  # 
+    rename(LONGITUDE = LONG) %>% 
+    rename(LATITUDE = LAT) %>%
+    mutate(NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+    mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
+
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = remove_acentos(toupper(MUNICIPIO_CRIME)))
   
-  # obtem nomes das colunas
-  cabecalho <- names(df_dados)
-  
-  # converte as linhas da coluna municipio para maiusculos e cria data frame
-  df_dados <- df_dados %>% mutate(municipio = toupper(municipio)) %>% as.data.frame(.)
+  # verifica inconsistencia entre as colunas de merge
+  inconsistencias <- setdiff(remove_acentos(df_dados$MUNICIPIO_CRIME), remove_acentos(df_geo$NM_MUNICIP))
+  ifelse(length(inconsistencias) > 0, print(paste("Inconsistencia tratada:", inconsistencias, sep = " ")), print("Sem inconsistencias"))
+
+  for(nlinha in 1:nrow(df_dados)) {
+    if(!is.na(df_dados[nlinha, 1])) {
+      if ("ITAPAJE" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[1]) df_dados[nlinha, 1] <- "ITAPAGE"
+      }
+      if ("NOVA JAGUARIBARA" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[2]) df_dados[nlinha, 1] <- "JAGUARIBARA"
+      }
+      if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
+        if(df_dados[nlinha, 1] == inconsistencias[3]) df_dados[nlinha, 1] <- "DEPUTADO IRAPUAN PINHEIRO"
+      }
+    }
+  }
   
   # Merge dos data frames com geolocalizacao por municipio
-  df_merge <- merge(df_dados, df_geo, by.x=c('municipio'), by.y=c('NM_MUNICIP'))  %>% 
-    .[,c(c(2:3),1,c(4:ncol(.)))] %>% # reordena colunas 
-    mutate(municipio = str_to_title(municipio)) # Restaura formato da coluna
+  df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_CRIME'), by.y=c('NM_MUNICIP'))
   
-  # Inclui cabecalhos
-  names(df_merge) <- tolower(c(cabecalho, colunas[(1:2)]))
-  
-  # Renomea colunas coordenadas
-  df_merge <- df_merge %>% rename(longitude = long) %>% rename(latitude = lat) 
-  
-  # Padroniza linhas
-  df_merge %>% mutate_if(is.character, str_to_title) -> df_merge
-  
+  # Restaura formato da coluna Municipio
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+
   # retorna dadta frame
   return(df_merge) 
 }
 
-# Funcao que cria um arquivo CSV e obtem um data frame 
-exporta_importa_csv <- function(df_limpo) {
+# Funcao que cria um arquivo CSV
+exporta_csv <- function(df_limpo, nome_csv=NA) {
   # classes dos tipos de colunas
   classes_colunas <- sapply(df_limpo, class)
   
   # salvar dados em arquivo CSV
-  nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_arquivo, ".csv"))
-  
+  if(is.na(nome_csv)) {
+    nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_arquivo, ".csv"))
+  } else {
+    nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_csv))
+  }
+
   # Escrever arquivo CSV
-  readr::write_csv(x = df_limpo, path = nome_arquivo_csv, na = "NA", col_names = TRUE)
-  
-  # Importanto do CSV criado
-  df_importado <- utils::read.table(file = nome_arquivo_csv, 
-                                    header = TRUE, 
-                                    na.strings = "NA", 
-                                    sep = ",", 
-                                    fileEncoding = "UTF-8", 
-                                    encoding = "ISO-8859-1", 
-                                    colClasses = classes_colunas)
-  
-  return(df_importado)
+  readr::write_excel_csv2(x = df_limpo, path = nome_arquivo_csv, na = "NA", col_names = TRUE, delim = ";")
+}
+
+importa_csv <- function(arquivo_csv) {
+  # classes dos tipos de colunas
+  classes_colunas <- cols(ID = col_number(), 
+                          AIS = col_character(), 
+                          MUNICIPIO_CRIME = col_character(), 
+                          NATUREZA_CRIME = col_character(), 
+                          ARMA_UTILIZADA = col_character(), 
+                          DATA_REGISTRO = col_character(), 
+                          NOME_VITIMA = col_character(), 
+                          GUIA_CADAVERICA = col_character(), 
+                          SEXO = col_character(), 
+                          IDADE = col_number())
+  # Importanto CSV
+  dados_csv <- readr::read_delim(file = arquivo_csv, 
+                                 delim = ";", 
+                                 na = "NA",
+                                 col_names = TRUE,
+                                 #col_types = classes_colunas, 
+                                 locale = locale(date_names = "pt"),
+                                 progress = show_progress())
+  return(dados_csv)
 }
 
 #===========================================================================================
 #                                 LIMPEZA                                      
 #-------------------------------------------------------------------------------------------
+# Funcao para remover acentos
+remove_acentos <- function(obj_str) {
+  if(!is.character(obj_str)) {
+    obj_str <- as.character(obj_str)
+  }
+  obj_str <- stringi::stri_trans_general(str = obj_str, "latin-ascii")
+  
+  return(obj_str)
+}
+
+# Funcao que obtem matrix de tabelas
+extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
+  return(extract_tables(file = caminho_completo_arquivo, area = areas_tabela, guess = FALSE, encoding = "UTF-8"))
+}
+
+# Funcao para padronizar o formato dos dados
+padroniza_dados <- function(df_dados) {
+  
+  # Renomeia colunas
+  df_dados <- df_dados %>% 
+    rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
+    rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
+    rename(DATA_REGISTRO = DATA_MORTE) %>% 
+    # cria variavel mes/ano
+    mutate(MES_ANO = format.Date(as.Date(DATA_REGISTRO, format = "%d/%m/%Y"), "%m/%Y")) 
+  
+  # Converte todas as variaveis factor em character
+  vars_factor <- lapply(df_dados, class) == "factor"
+  df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
+  
+  # Remove espacos em branco na esquerda/direita das variaveis
+  df_dados <- df_dados %>% 
+    mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
+           NATUREZA_CRIME = str_trim(NATUREZA_CRIME), 
+           ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
+           DATA_REGISTRO = str_trim(DATA_REGISTRO), 
+           SEXO = str_trim(SEXO), 
+           IDADE = str_trim(IDADE)
+    )
+  
+  # Seleciona colunas relevantes
+  df_dados <- select( df_dados, c(names(df_dados)[3:6],names(df_dados)[9:ncol(df_dados)]) )
+  
+  # Converte caracteres da variaveis para formato titulo
+  df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
+  
+  return(df_dados)
+}
+
 # Funcao que obtem linhas da matrix com valores quebrados
 corrige_variavel <- function(num_col, tit_coluna, tb_matrix) {
   
@@ -218,65 +290,166 @@ corrige_variavel <- function(num_col, tit_coluna, tb_matrix) {
   return(linhas)
 }
 
-# Funcao para remover acentos
-remove_acentos <- function(nm_coluna) {
-  if(!is.character(nm_coluna))
-    nm_coluna <- as.character(nm_coluna)
-  col_texto <- toupper(stringi::stri_trans_general(nm_coluna, "latin-ascii"))
-  return(col_texto)
+# Funcao que corrige variaveis fragmentadas na matriz
+concatena_variaveis_matriz <- function(m_tabela) {
+  # concatena valores fragmentados da coluna coluna 2
+  coluna <- c(2)
+  linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
+  if(!is.null(linhas)) {
+    for (num in 1:length(linhas)) {
+      var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
+      print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
+      m_tabela[linhas[num], coluna] <- var_correcao
+    }
+  }
+  
+  # concatena valores fragmentados da coluna coluna 3
+  coluna <- c(3)
+  linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
+  if(!is.null(linhas)) {
+    for (num in 1:length(linhas)) {
+      var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
+      print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
+      m_tabela[linhas[num], coluna] <- var_correcao
+    }
+  }
+  
+  # concatena valores fragmentados da coluna coluna 4
+  coluna <- c(4)
+  linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
+  if(!is.null(linhas)) {
+    for (num in 1:length(linhas)) {
+      var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
+      print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
+      m_tabela[linhas[num], coluna] <- var_correcao
+    }
+  }
+  
+  # concatena valores fragmentados da coluna coluna 7
+  coluna <- c(7)
+  linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
+  if(!is.null(linhas)) {
+    for (num in 1:length(linhas)) {
+      var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
+      print(paste("Linha:", linhas[num], "Corrigindo variavel para:", var_correcao))
+      m_tabela[linhas[num], coluna] <- var_correcao
+    }
+  }
+  
+  return(m_tabela)
 }
 
-# Funcao que obtem matrix de tabelas
-extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
-  return(extract_tables(file = caminho_completo_arquivo, area = areas_tabela, guess = FALSE, encoding = "UTF-8"))
-  #return(extract_tables(file = caminho_completo_arquivo, method = "decide", encoding = "UTF-8"))
+# Funcao que formata variaveis da matriz de tabelas
+corrige_variaveis_matriz <- function(m_tabela) {
+  for (linha in rev(1:nrow(m_tabela))) {
+    # Substitui ifen ou vazio por NA nas linhas da coluna 3
+    if (!is.na(m_tabela[linha,3])) {
+      if(m_tabela[linha,3] == "-" | nchar(m_tabela[linha,3]) == 0) { m_tabela[linha,3] <- NA }
+    }
+    # Substitui ifen ou vazio por NA nas linhas da coluna 5
+    if (!is.na(m_tabela[linha,5])) {
+      if(m_tabela[linha,5] == "-" | nchar(m_tabela[linha,5]) == 0) { m_tabela[linha,5] <- NA }
+    }
+    # Substitui ifen ou ifen/barra ou vazio por NA nas linhas da coluna 8
+    if (!is.na(m_tabela[linha,8])) {
+      if(m_tabela[linha,8] == "-" | m_tabela[linha,8] == "-/" | nchar(m_tabela[linha,8]) == 0) { m_tabela[linha,8] <- NA }
+    }
+    # Substitui M por Masculino nas linhas da coluna 9
+    if (!is.na(m_tabela[linha,9])) {
+      if (m_tabela[linha,9] == "M") { m_tabela[linha,9] <- "Masculino" } 
+    }
+    # Substitui F por Feminino nas linhas da coluna 9
+    if (!is.na(m_tabela[linha,9])) {
+      if(m_tabela[linha,9] == "F") { m_tabela[linha,9] <- "Feminino" }
+    }
+    # Substitui ifen ou vazio por NA nas linhas da coluna 10
+    if (!is.na(m_tabela[linha,10])) {
+      if(m_tabela[linha,10] == "-" | nchar(m_tabela[linha,10]) == 0) { m_tabela[linha,10] <- NA }
+    }
+  }
+  
+  return(m_tabela)
 }
 
+# Funcao para excluir linhas vazias da matriz de tabelas
+exclui_linhas_matriz <- function(m_tabela) {
+  # exclui linhas desnecessarias 
+  for (linha in rev(1:nrow(m_tabela))) {
+    if(!is.na(m_tabela[linha,1])) {
+      if(nchar(m_tabela[linha,1]) == 0 | toupper(m_tabela[linha,1]) == "ID") {
+        m_tabela <- m_tabela[-c(linha),]
+      }
+    }
+  }
+  
+  return(m_tabela)
+}
+
+# Funcao para criar ID
+cria_id <- function(df_dados) {
+  # Recria ID
+  df_dados <- df_dados %>% cbind(., ID = c(1:nrow(.))) %>% .[,-c(1)] %>% .[,c(10, 1:9)]
+  
+  return(df_dados)
+}
+
+# Funcao que inclui cabecalho com nomes das colunas
+adiciona_cabecalho <- function(df_dados) {
+  # Atribui cabecalho ao data frame
+  m_tabela_cabecalho <- c("ID","AIS","MUNICIPIO","NATUREZA_DO_FATO","ARMA_UTILIZADA","DATA_MORTE","NOME_VITIMA","GUIA_CADAVERICA","SEXO","IDADE")
+  names(df_dados) <- m_tabela_cabecalho
+  
+  return(df_dados)
+}
+
+# Funcao para limpeza dos dados
 realiza_limpeza_dados <- function() {
   
+  # Data frames necessarios
   lista_anos <- extrai_lista_anos(URL_site)
   vetor_anos <- lista_anos$ano %>% as.vector(.)
-  
+
+  # Obtem data frames por ano com dados limpos
   if(2018 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[1, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
-    dados_crime_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)
+    dados_crime_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)  
   }
-  
   if(2017 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
-    dados_crime_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses)
+    dados_crime_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses) 
   }
-
   if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses)
+    dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses) 
   }
-  
   if(2015 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[4, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[4, 1])
-    dados_crime_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses)
+    dados_crime_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses) 
   }
-  
   if(2014 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses)
+    dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses) 
   }
   
+  # Merge dos data frames, inclusao de cabecalho e reconstrucao da variavel ID
   dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, 
                                      dados_crime_ce_2017, 
                                      dados_crime_ce_2016, 
                                      dados_crime_ce_2015,
-                                     dados_crime_ce_2014)
+                                     dados_crime_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
   
-  # Merge com dados geoespaciais
-  #df_dados_merge_geo <- merge_dados_geo(df_merges)
+  # Cria variaveis globais dos data frames
+  assign('dados_crime_ce_2018', cria_id( adiciona_cabecalho( dados_crime_ce_2018 ) ), envir=.GlobalEnv)
+  assign('dados_crime_ce_2017', cria_id( adiciona_cabecalho( dados_crime_ce_2017 ) ), envir=.GlobalEnv)
+  assign('dados_crime_ce_2016', cria_id( adiciona_cabecalho( dados_crime_ce_2016 ) ), envir=.GlobalEnv)
+  assign('dados_crime_ce_2015', cria_id( adiciona_cabecalho( dados_crime_ce_2015 ) ), envir=.GlobalEnv)
+  assign('dados_crime_ce_2014', cria_id( adiciona_cabecalho( dados_crime_ce_2014 ) ), envir=.GlobalEnv)
   
-  #return(df_dados_merge_geo)
   return(dados_crime_ce_merge_anos)
-
 }
+
