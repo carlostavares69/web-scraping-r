@@ -12,7 +12,7 @@ nome_arquivo <- c("Indicadores_Crimes_CE_2014-2018")
 arquivo_csv <- nome_arquivo
 
 # Pacotes utilizados na analise.
-pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","lubridate","rgdal","kableExtra")
+pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","lubridate","rgdal","leaflet","htmlwidgets")
 
 ##############################################################################################
 ## CONFIGURACOES DO RSTUDIO
@@ -79,4 +79,6 @@ print(suppressMessages(library(stringi)))
 print(suppressMessages(library(readxl)))
 print(suppressMessages(library(lubridate)))
 print(suppressMessages(library(rgdal)))
-print(suppressMessages(library(kableExtra)))
+print(suppressMessages(library(leaflet)))
+print(suppressMessages(library(htmlwidgets)))
+

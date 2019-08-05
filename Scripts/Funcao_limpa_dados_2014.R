@@ -10,6 +10,14 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
   df_nome_docs <- rbind(data_frame_meses[2])
   total_pgs <- 0
   
+  # ######################### temp
+  # ano <- lista_anos[5, 2]
+  # data_frame_meses <- df_lista_meses
+  # nome <- "JANEIRO-2014"
+  # glimpse(m_tabelas)
+  # View(m_tabela)
+  # ######################### temp
+  
   for (num_doc in 1:nrow(df_nome_docs)) {
     nome <- as.character(data_frame_meses[num_doc,][2]$mes)
     arquivo <- file.path(".", dir_arquivos, ano, paste0(nome, ".pdf"))
@@ -26,8 +34,8 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         m_tabela <- m_tabela %>% cbind(., ...0 = c(1:nrow(.))) %>% .[, c(10,1,2,3,4,5,6,7,8,9)] 
         # Padroniza cabecalhos
         names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
-        
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # converte em data frame.
@@ -44,13 +52,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # Padroniza cabecalhos
         names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
         
-        # Corrige variaveis de linhas com valores quebrados
-        m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
-        
-        # exclui linha irrelevante
-        m_tabela <- m_tabela[-c(117),]
-        
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # faz merge de linhas do data frame anterior.
@@ -67,7 +69,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # Padroniza cabecalhos
         names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
 
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # faz merge de linhas do data frame anterior.
@@ -83,11 +85,8 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
           
           # Padroniza cabecalhos
           names(m_tabela) <- c("V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10")
-          
-          # Corrige variaveis de linhas com valores quebrados
-          #m_tabela[116,3] <- paste(m_tabela[116,3], m_tabela[117,3], sep = " ")
-          
-          # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+
+          # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
           m_tabela <- corrige_variaveis_matriz(m_tabela)
           
           # Exclui linha irrelevante
@@ -121,7 +120,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # exclui linhas desnecessarias 
@@ -150,7 +149,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # Concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -179,7 +178,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # exclui linhas desnecessarias 
@@ -208,7 +207,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # exclui linhas desnecessarias 
@@ -237,7 +236,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
  
-        # Corrige variaveis de linhas com valores quebrados
+        # Corrige variaveis com valores quebrados
         m_tabela[481,3] <- m_tabela[481,2]
         m_tabela[484,3] <- m_tabela[484,2]
         m_tabela[481,2] <- paste(m_tabela[480,2], m_tabela[482,2], sep = " ")
@@ -248,10 +247,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,3] <- MUNICIPIO
           m_tabela[n_linha,2] <- substr(m_tabela[n_linha,2], 0, nchar(m_tabela[n_linha,2]) - nchar(MUNICIPIO) )
         }
-        
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
-        #m_tabela <- corrige_variaveis_matriz(m_tabela)
-        
+
         # exclui linhas desnecessarias 
         m_tabela <- exclui_linhas_matriz(m_tabela)
         
@@ -278,7 +274,14 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Corrige variaveis de valores inconsistentes
+        for (n_linha in 1:nrow(m_tabela)) {
+          if(n_linha %in% c(378,404,409)) {
+            m_tabela[n_linha,4] <- c("HOMICIDIO DOLOSO")
+          }
+        }
+        
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # exclui linhas desnecessarias 
@@ -524,8 +527,14 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
           if (n_linha == 358) { m_tabela[n_linha,10] <- c(45) }
           if (n_linha == 373) { m_tabela[n_linha,10] <- c(36) }
         }
+        # Corrige variaveis de valores inconsistentes
+        for (n_linha in 1:nrow(m_tabela)) {
+          if(!is.na(m_tabela[n_linha,5]) & m_tabela[n_linha,5] == c("ARMA D FOGO")) {
+            m_tabela[n_linha,5] <- c("ARMA DE FOGO")
+          }
+        }
         
-        # Remove ifen,barra,F,M das variaveis 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # converte matriz em data frame e faz merge de linhas.
@@ -551,7 +560,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         # concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        #Corrige variaveis de linhas com valores quebrados
+        # Corrige variaveis com valores quebrados
         for (n_linha in 512:534) {
             NATUREZA_FATO <- substr(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-15, nchar(m_tabela[n_linha,3]))
             m_tabela[n_linha,4] <- NATUREZA_FATO
@@ -559,7 +568,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
         }
         m_tabela[517,3] <- m_tabela[507,3]
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # exclui linhas desnecessarias 
@@ -583,6 +592,9 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
     gsub("-out-", "/10/", .) %>% 
     gsub("-nov-", "/11/", .) %>% 
     gsub("-dez-", "/12/", .)
+  
+  # Padroniza valores da coluna 5, 9 e 10  
+  df_tabela <- padroniza_colunas_inconsistentes(df_tabela)
   
   print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
   print(paste(nrow(df_tabela), "Linhas", sep = " ")) 

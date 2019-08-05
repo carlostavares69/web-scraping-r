@@ -50,7 +50,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           }
         }
 
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
 
         # Exclui linhas desnecessarias 
@@ -88,7 +88,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
             m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -128,7 +128,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -169,7 +169,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- m_tabela[430,4]
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -214,7 +214,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -260,7 +260,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           }
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -296,7 +296,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -335,7 +335,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -374,7 +374,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -412,7 +412,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -452,7 +452,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           m_tabela[n_linha,4] <- NATUREZA_FATO
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -504,7 +504,7 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
           }
         }
         
-        # Remove ifen,barra,vazio,F,M das variaveis 5, 8, 9 e 10
+        # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
@@ -520,6 +520,9 @@ limpa_dados_2018 <- function(ano, data_frame_meses) {
 
   # Padroniza o formato da data
   df_tabela[,6] <- df_tabela[,6] %>% gsub("-Apr-", "/04/", .) %>% gsub("-May-", "/05/", .)
+  
+  # Padroniza valores da coluna 5, 9 e 10  
+  df_tabela <- padroniza_colunas_inconsistentes(df_tabela)
   
   print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
   print(paste(nrow(df_tabela), "Linhas", sep = " ")) 

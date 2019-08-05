@@ -198,7 +198,7 @@ padroniza_dados <- function(df_dados) {
   # Remove espacos em branco na esquerda/direita das variaveis
   df_dados <- df_dados %>% 
     mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
-           NATUREZA_CRIME = str_trim(NATUREZA_CRIME), 
+           NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
            ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
            DATA_REGISTRO = str_trim(DATA_REGISTRO), 
            SEXO = str_trim(SEXO), 
@@ -294,15 +294,15 @@ concatena_variaveis_matriz <- function(m_tabela) {
 # Funcao que formata variaveis da matriz de tabelas
 corrige_variaveis_matriz <- function(m_tabela) {
   for (linha in rev(1:nrow(m_tabela))) {
-    # Substitui ifen ou vazio por NA nas linhas da coluna 3
+    # Substitui hifen ou vazio por NA nas linhas da coluna 3
     if (!is.na(m_tabela[linha,3])) {
       if(m_tabela[linha,3] == "-" | nchar(m_tabela[linha,3]) == 0) { m_tabela[linha,3] <- NA }
     }
-    # Substitui ifen ou vazio por NA nas linhas da coluna 5
+    # Substitui hifen ou vazio por NA nas linhas da coluna 5
     if (!is.na(m_tabela[linha,5])) {
       if(m_tabela[linha,5] == "-" | nchar(m_tabela[linha,5]) == 0) { m_tabela[linha,5] <- NA }
     }
-    # Substitui ifen ou ifen/barra ou vazio por NA nas linhas da coluna 8
+    # Substitui hifen ou hifen/barra ou vazio por NA nas linhas da coluna 8
     if (!is.na(m_tabela[linha,8])) {
       if(m_tabela[linha,8] == "-" | m_tabela[linha,8] == "-/" | nchar(m_tabela[linha,8]) == 0) { m_tabela[linha,8] <- NA }
     }
@@ -314,7 +314,7 @@ corrige_variaveis_matriz <- function(m_tabela) {
     if (!is.na(m_tabela[linha,9])) {
       if(m_tabela[linha,9] == "F") { m_tabela[linha,9] <- "Feminino" }
     }
-    # Substitui ifen ou vazio por NA nas linhas da coluna 10
+    # Substitui hifen ou vazio por NA nas linhas da coluna 10
     if (!is.na(m_tabela[linha,10])) {
       if(m_tabela[linha,10] == "-" | nchar(m_tabela[linha,10]) == 0) { m_tabela[linha,10] <- NA }
     }
@@ -335,6 +335,63 @@ exclui_linhas_matriz <- function(m_tabela) {
   }
   
   return(m_tabela)
+}
+
+# Funcao que padroniza valores inconsistentes de colunas
+padroniza_colunas_inconsistentes <- function(df_tabela) {
+  
+  # Padroniza valores da coluna 5, 9 e 10  
+  tipo1 <- c("ARMA DE FOGO E ARMA")
+  tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO")
+  tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA")
+  tipo4 <- c("Outros meios","EOUTROS","OUTRO","ARMA OUTROS","Outro","OUTRO TIPO","AMA OUTROS")
+  tipo5 <- c("Meio não informado","NÃO INFORMAD","NI")
+  tipo6 <- c("NÃO IDENTIFICAD-O","NI", "I")
+  tipo7 <- c("-","")
+  tipo8 <- c("M")
+  tipo9 <- c("F")
+  tipo10 <- c("","-","0",0)
+  
+  for (n_linha in 1:nrow(df_tabela)) {
+    
+    # Padroniza valores da coluna 5
+    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo1) {
+      df_tabela[n_linha,5] <- c("ARMA DE FOGO E BRANCA")
+    }
+    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo2) {
+      df_tabela[n_linha,5] <- c("ARMA DE FOGO")
+    }
+    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo3) {
+      df_tabela[n_linha,5] <- c("ARMA BRANCA")
+    }
+    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo4) {
+      df_tabela[n_linha,5] <- c("OUTROS")
+    }
+    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo5) {
+      df_tabela[n_linha,5] <- c("NÃO INFORMADO")
+    }
+    
+    # Padroniza valores da coluna 9
+    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo6) {
+      df_tabela[n_linha,9] <- c("Não identificado")
+    }
+    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo7) {
+      df_tabela[n_linha,9] <- NA
+    }
+    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo8) {
+      df_tabela[n_linha,9] <- c("MASCULINO")
+    }
+    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo9) {
+      df_tabela[n_linha,9] <- c("FEMININO")
+    }
+    
+    # Padroniza valores da coluna 10
+    if(!is.na(df_tabela[n_linha,10]) & df_tabela[n_linha,10] %in% tipo10) {
+      df_tabela[n_linha,10] <- NA
+    }
+  } 
+  
+  return(df_tabela)
 }
 
 # Funcao para criar ID
@@ -475,9 +532,6 @@ merge_dados_incidencia_crime <- function(df_dados) {
     summarise(INCIDENCIA_CRIME = n()) %>%
     distinct()
 
-  # Verifica inconsistencia entre as colunas de merge
-  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, df_incidencia$MUNICIPIO_CRIME)
-  
   df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO_CRIME'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
