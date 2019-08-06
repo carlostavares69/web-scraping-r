@@ -158,8 +158,8 @@ importa_csv <- function(arquivo_csv) {
     SEXO = col_character(), 
     IDADE = col_number(), 
     MES_ANO = col_character(), 
-    LONGITUDE = col_character(), 
-    LATITUDE = col_character(), 
+    LONGITUDE = col_number(), 
+    LATITUDE = col_number(), 
     INCIDENCIA_CRIME = col_number(), 
     POPULACAO = col_character(), 
     IDHM = col_character(), 
@@ -190,34 +190,29 @@ remove_acentos <- function(obj_str) {
 }
 
 # Funcao para padronizar o formato dos dados
-padroniza_dados <- function(df_dados, colunas_relevantes) {
-  if(is.null(colunas_relevantes)) {
-    # Renomeia colunas
-    df_dados <- df_dados %>% 
-      rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
-      rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
-      # cria variavel mes/ano
-      mutate(MES_ANO = format.Date(as.Date(DATA_MORTE, format = "%d/%m/%Y"), "%m/%Y")) 
-    
-    # Converte todas as variaveis factor em character
-    vars_factor <- lapply(df_dados, class) == "factor"
-    df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
-    
-    # Remove espacos em branco na esquerda/direita das variaveis
-    df_dados <- df_dados %>% 
-      mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
-             NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
-             ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
-             DATA_MORTE = str_trim(DATA_MORTE), 
-             SEXO = str_trim(SEXO), 
-             IDADE = str_trim(IDADE))
-    
-    # Converte caracteres da variaveis para formato titulo
-    df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
-  } else {
-    # Seleciona colunas relevantes
-    df_dados <- select( df_dados, colunas_relevantes)
-  }
+padroniza_dados <- function(df_dados) {
+  # Renomeia colunas
+  df_dados <- df_dados %>% 
+    rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
+    rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
+    # cria variavel mes/ano
+    mutate(MES_ANO = format.Date(as.Date(DATA_MORTE, format = "%d/%m/%Y"), "%m/%Y")) 
+  
+  # Converte todas as variaveis factor em character
+  vars_factor <- lapply(df_dados, class) == "factor"
+  df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
+  
+  # Remove espacos em branco na esquerda/direita das variaveis
+  df_dados <- df_dados %>% 
+    mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
+           NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
+           ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
+           DATA_MORTE = str_trim(DATA_MORTE), 
+           SEXO = str_trim(SEXO), 
+           IDADE = str_trim(IDADE))
+  
+  # Converte caracteres da variaveis para formato titulo
+  df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
 
   return(df_dados)
 }

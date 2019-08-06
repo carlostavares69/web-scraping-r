@@ -112,29 +112,27 @@ exporta_csv(df_crime_ce_2014, "Indicadores_Crimes_CE_2014.csv")
 ## IMPORTACAO DOS DADOS
 ##############################################################################################
 
-# Importa dados do arquivo CSV anos 2014-2018
-df_crime_ce <- importa_csv(file.path(".", dir_dados, paste0(nome_arquivo,".csv")))
-cols_relevantes_analise <- c("MUNICIPIO_CRIME","NATUREZA_CRIME","ARMA_UTILIZADA","DATA_MORTE","SEXO","IDADE",
-                             "MES_ANO","LATITUDE","LONGITUDE","INCIDENCIA_CRIME","POPULACAO","IDHM")
-crime_ceara <- padroniza_dados(df_crime_ce, cols_relevantes_analise)
+# Importa dados do arquivo CSV dos anos 2014-2018
+crime_ceara <- importa_csv(file.path(".", dir_dados, paste0(nome_arquivo,".csv")))
+
+# Seleciona apenas colunas relevantes para analise
+cols_relevantes<- c("MUNICIPIO_CRIME","NATUREZA_CRIME","ARMA_UTILIZADA","DATA_MORTE","SEXO","IDADE","MES_ANO","LATITUDE","LONGITUDE","INCIDENCIA_CRIME","POPULACAO","IDHM")
+crime_ceara <- dplyr::select(crime_ceara, cols_relevantes)
 
 ##############################################################################################
 ## ANALISE DOS DADOS
 ##############################################################################################
-names(df_crime_ce_2014_2018)
-# Data frame geral
-glimpse(crime_ceara)
-str(df_crime_ce)
+
+str(crime_ceara)
 View(crime_ceara)
 
 # Codigo TEMP - TESTES EM BUSCA DE Inconformidades -----------------------------------------
-# names(crime_ceara)
 # for (linha in 1:nrow(crime_ceara)) {
 #   if (!is.na(crime_ceara[linha,5]) & crime_ceara[linha,5] == "I") {
 #     print(paste(crime_ceara[linha,5],crime_ceara[linha,4],sep = " "))
 #   }
 # }
-# unique(df_crime_ce$NATUREZA_CRIME)
+# unique(crime_ceara$ARMA_UTILIZADA)
 # Codigo TEMP - TESTES EM BUSCA DE Inconformidades -----------------------------------------
 
 ##############################################################################################
@@ -142,15 +140,14 @@ View(crime_ceara)
 ##############################################################################################
 
 # Mapas de clusters do crime no Ceara 2014/2018
-agrupamento_crime_ce <- crime_ceara %>% dplyr::select(MUNICIPIO_CRIME,NATUREZA_CRIME,ARMA_UTILIZADA,LONGITUDE,LATITUDE,INCIDENCIA_CRIME) %>%
-  mutate(LONGITUDE = as.numeric(LONGITUDE), LATITUDE = as.numeric(LATITUDE))
+agrupamento_crime_ce <- crime_ceara %>% dplyr::select(MUNICIPIO_CRIME,NATUREZA_CRIME,ARMA_UTILIZADA,LONGITUDE,LATITUDE,INCIDENCIA_CRIME)
 
 labels <- paste0("<strong>Cidade: </strong>", stringi::stri_trans_general(agrupamento_crime_ce$MUNICIPIO_CRIME, "latin-ascii"),
                  "<br><strong>Arma: </strong>", stringi::stri_trans_general(agrupamento_crime_ce$ARMA_UTILIZADA, "latin-ascii"),
                  "<br><strong>Crime: </strong>", stringi::stri_trans_general(agrupamento_crime_ce$NATUREZA_CRIME, "latin-ascii"),
                  "<br><strong>Incidencia: </strong>", stringi::stri_trans_general(agrupamento_crime_ce$INCIDENCIA_CRIME, "latin-ascii")) %>% lapply(htmltools::HTML)
 
-leaflet::leaflet(agrupamento_crime_ce) %>%
+mapa_agrupamento <- leaflet::leaflet(agrupamento_crime_ce) %>%
   setView(lng=-38.5, lat=-3.7, zoom=7) %>%
   addTiles() %>%
   addProviderTiles("CartoDB.Positron", group="Mapa claro") %>%
@@ -158,7 +155,7 @@ leaflet::leaflet(agrupamento_crime_ce) %>%
   addScaleBar %>%
   addMarkers(~LONGITUDE, ~LATITUDE,label = labels,  clusterOptions = markerClusterOptions()) %>%
   addLayersControl(baseGroups = c("Mapa verde", "Mapa claro"), options = layersControlOptions(collapsed = FALSE)) %>% 
-  clearBounds() %>%
-  
+  clearBounds();mapa_agrupamento
+
   # Salva html do grafico dinamico (Requer caminho absoluto do diretorio destino.)
-  htmlwidgets::saveWidget(., file = file.path(getwd(), dir_graficos, "clusters_crime_ce_2014_2018.html"))
+  htmlwidgets::saveWidget(widget = mapa_agrupamento, file = file.path(getwd(), dir_graficos, "clusters_crime_ce_2014_2018.html"))
