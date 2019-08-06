@@ -38,3 +38,5 @@ R Core Team (2019). **R: A language and environment for statistical computing.**
   
 RStudio Team (2018). **RStudio: Integrated Development for R.** RStudio, Inc., Boston, MA URL http://www.rstudio.com/.  
 
+LAVOR, T. M. O. Open Data Day Fortaleza 2019: os highlights do evento. Disponível em: < http://br.okfn.org/2019/04/02/open-data-day-fortaleza-2019-os-highlights-do-evento/ > Acesso em: 05 Out. 2019.
+
