@@ -146,23 +146,32 @@ exporta_csv <- function(df_limpo, nome_csv=NA) {
 # Funcao que obtem dados do arquivo CSV
 importa_csv <- function(arquivo_csv) {
   # classes dos tipos de colunas
-  classes_colunas <- cols(ID = col_number(), 
-                          AIS = col_character(), 
-                          MUNICIPIO_CRIME = col_character(), 
-                          NATUREZA_CRIME = col_character(), 
-                          ARMA_UTILIZADA = col_character(), 
-                          DATA_REGISTRO = col_character(), 
-                          NOME_VITIMA = col_character(), 
-                          GUIA_CADAVERICA = col_character(), 
-                          SEXO = col_character(), 
-                          IDADE = col_number())
+  classes_colunas <- cols(
+    ID = col_number(), 
+    AIS = col_character(), 
+    MUNICIPIO_CRIME = col_character(), 
+    NATUREZA_CRIME = col_character(), 
+    ARMA_UTILIZADA = col_character(), 
+    DATA_MORTE = col_character(), 
+    NOME_VITIMA = col_character(), 
+    GUIA_CADAVERICA = col_character(), 
+    SEXO = col_character(), 
+    IDADE = col_number(), 
+    MES_ANO = col_character(), 
+    LONGITUDE = col_character(), 
+    LATITUDE = col_character(), 
+    INCIDENCIA_CRIME = col_number(), 
+    POPULACAO = col_character(), 
+    IDHM = col_character(), 
+    PIB_PERCAPITA = col_character()
+  )
   # Importanto CSV
   dados_csv <- readr::read_delim(file = arquivo_csv, 
                                  delim = ";", 
                                  na = "NA",
                                  col_names = TRUE,
-                                 #col_types = classes_colunas, 
-                                 locale = locale(date_names = "pt"),
+                                 col_types = classes_colunas, 
+                                 locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
                                  progress = show_progress())
   return(dados_csv)
 }
@@ -181,36 +190,35 @@ remove_acentos <- function(obj_str) {
 }
 
 # Funcao para padronizar o formato dos dados
-padroniza_dados <- function(df_dados) {
-  
-  # Renomeia colunas
-  df_dados <- df_dados %>% 
-    rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
-    rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
-    rename(DATA_REGISTRO = DATA_MORTE) %>% 
-    # cria variavel mes/ano
-    mutate(MES_ANO = format.Date(as.Date(DATA_REGISTRO, format = "%d/%m/%Y"), "%m/%Y")) 
-  
-  # Converte todas as variaveis factor em character
-  vars_factor <- lapply(df_dados, class) == "factor"
-  df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
-  
-  # Remove espacos em branco na esquerda/direita das variaveis
-  df_dados <- df_dados %>% 
-    mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
-           NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
-           ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
-           DATA_REGISTRO = str_trim(DATA_REGISTRO), 
-           SEXO = str_trim(SEXO), 
-           IDADE = str_trim(IDADE)
-    )
-  
-  # Seleciona colunas relevantes
-  df_dados <- select( df_dados, c(names(df_dados)[3:6],names(df_dados)[9:ncol(df_dados)]) )
-  
-  # Converte caracteres da variaveis para formato titulo
-  df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
-  
+padroniza_dados <- function(df_dados, colunas_relevantes) {
+  if(is.null(colunas_relevantes)) {
+    # Renomeia colunas
+    df_dados <- df_dados %>% 
+      rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
+      rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
+      # cria variavel mes/ano
+      mutate(MES_ANO = format.Date(as.Date(DATA_MORTE, format = "%d/%m/%Y"), "%m/%Y")) 
+    
+    # Converte todas as variaveis factor em character
+    vars_factor <- lapply(df_dados, class) == "factor"
+    df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
+    
+    # Remove espacos em branco na esquerda/direita das variaveis
+    df_dados <- df_dados %>% 
+      mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
+             NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
+             ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
+             DATA_MORTE = str_trim(DATA_MORTE), 
+             SEXO = str_trim(SEXO), 
+             IDADE = str_trim(IDADE))
+    
+    # Converte caracteres da variaveis para formato titulo
+    df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
+  } else {
+    # Seleciona colunas relevantes
+    df_dados <- select( df_dados, colunas_relevantes)
+  }
+
   return(df_dados)
 }
 
@@ -474,19 +482,22 @@ verifica_inconsistencias <- function(df_col1, df_col2) {
   return(inconsistencias)
 }
 
-# funcao para geocodificar conjunto de dados
+# Funcao para geocodificar conjunto de dados
 merge_dados_geo <- function(df_dados) {
-  # ftp://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/Shapefile_SHP/
-  # Importando o arquivo Shapefile com informacoes geograficas e coordenadas GPS
-  dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
-  
+  # Importando o arquivo Shapefile (Fonte IBGE) com informacoes geograficas e coordenadas GPS
+  if(!exists("dados_shp")) {
+    dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
+    # Cria variavel global
+    assign('dados_shp', dados_shp, envir=.GlobalEnv)
+  }
+
   # Filtro por municipios do Ceara
   df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
     as.data.frame(.) %>% 
-    select(., LONG, LAT, NM_MUNICIP) %>%  # 
-    rename(LONGITUDE = LONG) %>% 
+    select(., LAT, LONG, NM_MUNICIP) %>%
     rename(LATITUDE = LAT) %>%
-    mutate(NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+    rename(LONGITUDE = LONG) %>% 
+    mutate(LATITUDE = format(LATITUDE, trim = TRUE, digits = 7), LONGITUDE = format(LONGITUDE, trim = TRUE, digits = 7), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
     mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
 
   # Converte variavel para maiusculo e remove acentuacao
@@ -494,19 +505,17 @@ merge_dados_geo <- function(df_dados) {
   
   # Verifica inconsistencia entre as colunas de merge
   inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, df_geo$NM_MUNICIP)
-  # inconsistencias <- setdiff(remove_acentos(df_dados$MUNICIPIO_CRIME), remove_acentos(df_geo$NM_MUNICIP))
-  # ifelse(length(inconsistencias) > 0, print(paste("Inconsistencia tratada:", inconsistencias, sep = " ")), print("Sem inconsistencias"))
 
   for(nlinha in 1:nrow(df_dados)) {
-    if(!is.na(df_dados[nlinha, 1])) {
+    if(!is.na(df_dados[nlinha, 3])) {
       if ("ITAPAJE" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[1]) df_dados[nlinha, 1] <- "ITAPAGE"
+        if(df_dados[nlinha, 3] == inconsistencias[1]) df_dados[nlinha, 3] <- "ITAPAGE"
       }
       if ("NOVA JAGUARIBARA" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[2]) df_dados[nlinha, 1] <- "JAGUARIBARA"
+        if(df_dados[nlinha, 3] == inconsistencias[2]) df_dados[nlinha, 3] <- "JAGUARIBARA"
       }
       if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
-        if(df_dados[nlinha, 1] == inconsistencias[3]) df_dados[nlinha, 1] <- "DEPUTADO IRAPUAN PINHEIRO"
+        if(df_dados[nlinha, 3] == inconsistencias[3]) df_dados[nlinha, 3] <- "DEPUTADO IRAPUAN PINHEIRO"
       }
     }
   }
@@ -515,8 +524,10 @@ merge_dados_geo <- function(df_dados) {
   df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_CRIME'), by.y=c('NM_MUNICIP'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
-
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
+    # Reordena coluna MUNICIPIO_CRIME 
+    .[,c(2,3,1,4:ncol(.))]
+  
   # retorna dadta frame
   return(df_merge) 
 }
@@ -535,7 +546,9 @@ merge_dados_incidencia_crime <- function(df_dados) {
   df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO_CRIME'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
+    # Reordena coluna MUNICIPIO_CRIME 
+    .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
 }
@@ -545,9 +558,9 @@ merge_dados_populacao <- function(df_dados) {
   censo_pop <- suppressMessages(readxl::read_xls(
     file.path(".", dir_auxiliares, "Censo_Demografico_2010/total_populacao_ceara.xls"), col_names = FALSE))[2:185,][,-c(1,3,4,5,6,7)] %>% 
     rename(MUNICIPIO = "...2", POPULACAO = "...8") %>% 
-    mutate_if(is.character, str_to_upper) %>% 
+    mutate(POPULACAO = format(as.numeric(POPULACAO), big.mark=",", trim = TRUE)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-
+  
   # Converte variavel para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
   
@@ -558,7 +571,9 @@ merge_dados_populacao <- function(df_dados) {
   df_merge <- merge(df_dados, censo_pop, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
+    # Reordena coluna MUNICIPIO_CRIME 
+    .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
 }
@@ -568,7 +583,7 @@ merge_dados_idhm <- function(df_dados) {
   idhm <- suppressMessages(readxl::read_xlsx(
     file.path(".", dir_auxiliares, "Atlas_Desenvolvimento_Humano_Brasil_2010/AtlasBrasil_Consulta.xlsx"), col_names = FALSE))[3:186,][,c(2:3)] %>% 
     rename(MUNICIPIO = "...2", IDHM = "...3") %>% 
-    mutate_if(is.character, str_to_upper) %>% # se for caractere converte para maisuculo 
+    mutate(IDHM = ifelse(nchar(IDHM)>4, as.numeric(IDHM), as.character(IDHM)))  %>%
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
   
   # Converte variavel para maiusculo
@@ -581,7 +596,9 @@ merge_dados_idhm <- function(df_dados) {
   df_merge <- merge(df_dados, idhm, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
+    # Reordena coluna MUNICIPIO_CRIME 
+    .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
 }
@@ -591,9 +608,9 @@ merge_dados_pib <- function(df_dados) {
   pib_percapita <- suppressMessages(readxl::read_xls(
     file.path(".", dir_auxiliares, "Pib_Municipios_2010/PibMunicipal2006_2010.xls"), col_names = FALSE))[913:1096,][,-c(2:6)] %>% 
     rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
-    mutate_if(is.character, str_to_upper) %>% 
+    mutate(PIB_PERCAPITA = as.character(as.numeric(PIB_PERCAPITA))) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-  
+
   # Converte variavel para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
   
@@ -604,7 +621,9 @@ merge_dados_pib <- function(df_dados) {
   df_merge <- merge(df_dados, pib_percapita, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) 
+  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
+    # Reordena coluna MUNICIPIO_CRIME 
+    .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
 }
