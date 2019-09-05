@@ -6,13 +6,14 @@
 URL_site <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2/"
 
 # Nome padrao para todos os arquivos
-nome_arquivo <- c("Indicadores_Crimes_CE_2014-2018")
+nome_arquivo <- c("Homicidios_CEARA_2014-2018")
 
 # Nomes da planilha EXCEL (.xls | .xlsx)
 arquivo_csv <- nome_arquivo
 
 # Pacotes utilizados na analise.
-pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","lubridate","rgdal","leaflet","htmlwidgets")
+pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","lubridate",
+                     "rgdal","leaflet","htmlwidgets","ggthemes","forecast","prophet")
 
 ##############################################################################################
 ## CONFIGURACOES DO RSTUDIO
@@ -56,7 +57,7 @@ print(pacotes_analise)
 # Pacotes necessarios para RMarkdown.
 pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","installr")
 if (length(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packages()))) > 0) {
-  suppressMessages(install.packages(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packages()))))
+  suppressMessages(install.packages(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packages())), dependencies=TRUE))
   # RMarkdown precisa de Pandoc e MiKTeX instalados. https://miktex.org/2.9/setup.
   if(!require(pacotes_padrao[length(pacotes_padrao)])){
     suppressMessages(install.packages(setdiff(pacotes_padrao[length(pacotes_padrao)], rownames(installed.packages()))))
@@ -64,21 +65,28 @@ if (length(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packag
     install.pandoc()
   }
 }
-# Carregamento de pacotes padroes
+pacotes <- c(pacotes_padrao, pacotes_analise)
 print("Carregando bibliotecas:")
-print(suppressMessages(library(rmarkdown)))
-print(suppressMessages(library(knitr)))
-print(suppressMessages(library(prettydoc)))
-print(suppressMessages(library(tinytex)))
-# Carregamento de pacotes analise
-print(suppressMessages(library(tidyverse)))
-print(suppressMessages(library(tabulizer)))
-print(suppressMessages(library(rvest)))
-print(suppressMessages(library(readr)))
-print(suppressMessages(library(stringi)))
-print(suppressMessages(library(readxl)))
-print(suppressMessages(library(lubridate)))
-print(suppressMessages(library(rgdal)))
-print(suppressMessages(library(leaflet)))
-print(suppressMessages(library(htmlwidgets)))
-
+suppressPackageStartupMessages(base::sapply(pacotes, require, character.only=TRUE))
+# # R Markdown
+# print(suppressMessages(library(rmarkdown)))
+# print(suppressMessages(library(knitr)))
+# print(suppressMessages(library(prettydoc)))
+# print(suppressMessages(library(tinytex)))
+# # Padroes Data Scraping
+# print(suppressMessages(library(tidyverse)))
+# print(suppressMessages(library(tabulizer)))
+# print(suppressMessages(library(rvest)))
+# print(suppressMessages(library(readr)))
+# print(suppressMessages(library(stringi)))
+# print(suppressMessages(library(readxl)))
+# print(suppressMessages(library(lubridate)))
+# print(suppressMessages(library(rgdal)))
+# # Graficos
+# print(suppressMessages(library(leaflet)))
+# print(suppressMessages(library(htmlwidgets)))
+# print(suppressMessages(library(scales)))
+# print(suppressMessages(library(ggplot2)))
+# print(suppressMessages(library(ggthemes)))
+# print(suppressMessages(library(forecast)))
+# print(suppressMessages(library(prophet)))

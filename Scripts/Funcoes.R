@@ -149,21 +149,21 @@ importa_csv <- function(arquivo_csv) {
   classes_colunas <- cols(
     ID = col_number(), 
     AIS = col_character(), 
-    MUNICIPIO_CRIME = col_character(), 
-    NATUREZA_CRIME = col_character(), 
+    MUNICIPIO_HOMICIDIO = col_character(), 
+    NATUREZA_HOMICIDIO = col_character(), 
     ARMA_UTILIZADA = col_character(), 
-    DATA_MORTE = col_character(), 
+    DATA_HOMICIDIO = col_character(), 
     NOME_VITIMA = col_character(), 
     GUIA_CADAVERICA = col_character(), 
     SEXO = col_character(), 
     IDADE = col_number(), 
-    MES_ANO = col_character(), 
     LONGITUDE = col_number(), 
     LATITUDE = col_number(), 
-    INCIDENCIA_CRIME = col_number(), 
-    POPULACAO = col_character(), 
-    IDHM = col_character(), 
-    PIB_PERCAPITA = col_character()
+    POPULACAO = col_number(), 
+    IDHM = col_number(), 
+    PIB_PERCAPITA = col_number(),
+    MES_ANO = col_character(), 
+    INCIDENCIA_HOMICIDIO = col_number()
   )
   # Importanto CSV
   dados_csv <- readr::read_delim(file = arquivo_csv, 
@@ -191,12 +191,12 @@ remove_acentos <- function(obj_str) {
 
 # Funcao para padronizar o formato dos dados
 padroniza_dados <- function(df_dados) {
+  
   # Renomeia colunas
   df_dados <- df_dados %>% 
-    rename(MUNICIPIO_CRIME = MUNICIPIO) %>% 
-    rename(NATUREZA_CRIME = NATUREZA_DO_FATO) %>% 
-    # cria variavel mes/ano
-    mutate(MES_ANO = format.Date(as.Date(DATA_MORTE, format = "%d/%m/%Y"), "%m/%Y")) 
+    rename(MUNICIPIO_HOMICIDIO = MUNICIPIO) %>% 
+    rename(NATUREZA_HOMICIDIO = NATUREZA_DO_FATO) %>% 
+    rename(DATA_HOMICIDIO = DATA_MORTE) 
   
   # Converte todas as variaveis factor em character
   vars_factor <- lapply(df_dados, class) == "factor"
@@ -204,15 +204,22 @@ padroniza_dados <- function(df_dados) {
   
   # Remove espacos em branco na esquerda/direita das variaveis
   df_dados <- df_dados %>% 
-    mutate(MUNICIPIO_CRIME = str_trim(MUNICIPIO_CRIME), 
-           NATUREZA_CRIME = remove_acentos(str_trim(NATUREZA_CRIME)), 
+    mutate(MUNICIPIO_HOMICIDIO = str_trim(MUNICIPIO_HOMICIDIO), 
+           NATUREZA_HOMICIDIO = remove_acentos(str_trim(NATUREZA_HOMICIDIO)), 
            ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
-           DATA_MORTE = str_trim(DATA_MORTE), 
+           DATA_HOMICIDIO = str_trim(DATA_HOMICIDIO), 
+           NOME_VITIMA = str_trim(NOME_VITIMA), 
+           GUIA_CADAVERICA = str_trim(GUIA_CADAVERICA), 
            SEXO = str_trim(SEXO), 
            IDADE = str_trim(IDADE))
   
   # Converte caracteres da variaveis para formato titulo
-  df_dados %>% mutate_if(is.character, str_to_title) -> df_dados
+  df_dados <- df_dados %>% mutate_if(is.character, str_to_title)
+  
+  # Atribui NA para variaveis com valores desconhecidos
+  df_dados <- df_dados %>%
+    mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Não Informado" | ARMA_UTILIZADA == "Outros", NA)) %>%
+    mutate(SEXO = replace(SEXO, SEXO == "Não Identificado", NA)) 
 
   return(df_dados)
 }
@@ -349,51 +356,58 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
   tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA")
   tipo4 <- c("Outros meios","EOUTROS","OUTRO","ARMA OUTROS","Outro","OUTRO TIPO","AMA OUTROS")
   tipo5 <- c("Meio não informado","NÃO INFORMAD","NI")
-  tipo6 <- c("NÃO IDENTIFICAD-O","NI", "I")
+  tipo6 <- c("NÃO IDENTIFICAD-O","NI", "I", "-")
   tipo7 <- c("-","")
   tipo8 <- c("M")
   tipo9 <- c("F")
-  tipo10 <- c("","-","0",0)
+  tipo10 <- c("","-")
+  tipo11 <- c("LATROCINIO","LATROCÍNIO")
   
   for (n_linha in 1:nrow(df_tabela)) {
-    
+    # Padroniza valores da coluna 4
+    if(!is.na(df_tabela[n_linha,4])) {
+      if(df_tabela[n_linha,4] %in% tipo11) {df_tabela[n_linha,4] <- c("ROUBO SEGUIDO DE MORTE (LATROCINIO)")}
+    }
     # Padroniza valores da coluna 5
-    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo1) {
-      df_tabela[n_linha,5] <- c("ARMA DE FOGO E BRANCA")
+    if(!is.na(df_tabela[n_linha,5])) {
+      if(df_tabela[n_linha,5] %in% tipo1) {
+        df_tabela[n_linha,5] <- c("ARMA DE FOGO E BRANCA")
+      }
+      if(df_tabela[n_linha,5] %in% tipo2) {
+        df_tabela[n_linha,5] <- c("ARMA DE FOGO")
+      }
+      if(df_tabela[n_linha,5] %in% tipo3) {
+        df_tabela[n_linha,5] <- c("ARMA BRANCA")
+      }
+      if(df_tabela[n_linha,5] %in% tipo4) {
+        df_tabela[n_linha,5] <- c("OUTROS")
+      }
+      if(df_tabela[n_linha,5] %in% tipo5) {
+        df_tabela[n_linha,5] <- c("NÃO INFORMADO")
+      }
     }
-    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo2) {
-      df_tabela[n_linha,5] <- c("ARMA DE FOGO")
-    }
-    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo3) {
-      df_tabela[n_linha,5] <- c("ARMA BRANCA")
-    }
-    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo4) {
-      df_tabela[n_linha,5] <- c("OUTROS")
-    }
-    if(!is.na(df_tabela[n_linha,5]) & df_tabela[n_linha,5] %in% tipo5) {
-      df_tabela[n_linha,5] <- c("NÃO INFORMADO")
-    }
-    
     # Padroniza valores da coluna 9
-    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo6) {
-      df_tabela[n_linha,9] <- c("Não identificado")
-    }
-    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo7) {
-      df_tabela[n_linha,9] <- NA
-    }
-    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo8) {
-      df_tabela[n_linha,9] <- c("MASCULINO")
-    }
-    if(!is.na(df_tabela[n_linha,9]) & df_tabela[n_linha,9] %in% tipo9) {
-      df_tabela[n_linha,9] <- c("FEMININO")
+    if(!is.na(df_tabela[n_linha,9])) {
+      if(df_tabela[n_linha,9] %in% tipo6) {
+        df_tabela[n_linha,9] <- c("Não identificado")
+      }
+      if(df_tabela[n_linha,9] %in% tipo7) {
+        df_tabela[n_linha,9] <- NA
+      }
+      if(df_tabela[n_linha,9] %in% tipo8) {
+        df_tabela[n_linha,9] <- c("MASCULINO")
+      }
+      if(df_tabela[n_linha,9] %in% tipo9) {
+        df_tabela[n_linha,9] <- c("FEMININO")
+      }
     }
     
     # Padroniza valores da coluna 10
-    if(!is.na(df_tabela[n_linha,10]) & df_tabela[n_linha,10] %in% tipo10) {
-      df_tabela[n_linha,10] <- NA
+    if(!is.na(df_tabela[n_linha,10])) {
+      if(df_tabela[n_linha,10] %in% tipo10) { df_tabela[n_linha,10] <- NA }
     }
   } 
-  
+
   return(df_tabela)
 }
 
@@ -419,50 +433,50 @@ realiza_limpeza_dados <- function() {
   
   # Data frames necessarios
   lista_anos <- extrai_lista_anos(URL_site)
-  vetor_anos <- lista_anos$ano %>% as.vector(.)
+  vetor_anos <- lista_anos$ano %>% as.vector(.) %>% as.numeric(.)
 
   # Obtem data frames por ano com dados limpos
   if(2018 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[1, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
-    dados_crime_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)  
+    dados_homicidio_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)  
   }
   if(2017 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
-    dados_crime_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses) 
+    dados_homicidio_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses) 
   }
   if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    dados_crime_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses) 
+    dados_homicidio_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses) 
   }
   if(2015 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[4, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[4, 1])
-    dados_crime_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses) 
+    dados_homicidio_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses) 
   }
   if(2014 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    dados_crime_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses) 
+    dados_homicidio_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses) 
   }
   
   # Merge dos data frames, inclusao de cabecalho e reconstrucao da variavel ID
-  dados_crime_ce_merge_anos <- rbind(dados_crime_ce_2018, 
-                                     dados_crime_ce_2017, 
-                                     dados_crime_ce_2016, 
-                                     dados_crime_ce_2015,
-                                     dados_crime_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
+  dados_homicidio_ce_merge_anos <- rbind(dados_homicidio_ce_2018, 
+                                     dados_homicidio_ce_2017, 
+                                     dados_homicidio_ce_2016, 
+                                     dados_homicidio_ce_2015,
+                                     dados_homicidio_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
   
   # Cria variaveis globais dos data frames
-  assign('dados_crime_ce_2018', cria_id( adiciona_cabecalho( dados_crime_ce_2018 ) ), envir=.GlobalEnv)
-  assign('dados_crime_ce_2017', cria_id( adiciona_cabecalho( dados_crime_ce_2017 ) ), envir=.GlobalEnv)
-  assign('dados_crime_ce_2016', cria_id( adiciona_cabecalho( dados_crime_ce_2016 ) ), envir=.GlobalEnv)
-  assign('dados_crime_ce_2015', cria_id( adiciona_cabecalho( dados_crime_ce_2015 ) ), envir=.GlobalEnv)
-  assign('dados_crime_ce_2014', cria_id( adiciona_cabecalho( dados_crime_ce_2014 ) ), envir=.GlobalEnv)
+  assign('dados_homicidio_ce_2018', cria_id( adiciona_cabecalho( dados_homicidio_ce_2018 ) ), envir=.GlobalEnv)
+  assign('dados_homicidio_ce_2017', cria_id( adiciona_cabecalho( dados_homicidio_ce_2017 ) ), envir=.GlobalEnv)
+  assign('dados_homicidio_ce_2016', cria_id( adiciona_cabecalho( dados_homicidio_ce_2016 ) ), envir=.GlobalEnv)
+  assign('dados_homicidio_ce_2015', cria_id( adiciona_cabecalho( dados_homicidio_ce_2015 ) ), envir=.GlobalEnv)
+  assign('dados_homicidio_ce_2014', cria_id( adiciona_cabecalho( dados_homicidio_ce_2014 ) ), envir=.GlobalEnv)
   
-  return(dados_crime_ce_merge_anos)
+  return(dados_homicidio_ce_merge_anos)
 }
 
 #===========================================================================================
@@ -496,56 +510,51 @@ merge_dados_geo <- function(df_dados) {
     mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
 
   # Converte variavel para maiusculo e remove acentuacao
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = remove_acentos(toupper(MUNICIPIO_CRIME)))
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = remove_acentos(toupper(MUNICIPIO_HOMICIDIO)))
   
   # Verifica inconsistencia entre as colunas de merge
-  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, df_geo$NM_MUNICIP)
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, df_geo$NM_MUNICIP)
 
-  for(nlinha in 1:nrow(df_dados)) {
-    if(!is.na(df_dados[nlinha, 3])) {
-      if ("ITAPAJE" %in% inconsistencias) {
-        if(df_dados[nlinha, 3] == inconsistencias[1]) df_dados[nlinha, 3] <- "ITAPAGE"
-      }
-      if ("NOVA JAGUARIBARA" %in% inconsistencias) {
-        if(df_dados[nlinha, 3] == inconsistencias[2]) df_dados[nlinha, 3] <- "JAGUARIBARA"
-      }
-      if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
-        if(df_dados[nlinha, 3] == inconsistencias[3]) df_dados[nlinha, 3] <- "DEPUTADO IRAPUAN PINHEIRO"
-      }
-    }
-  }
+  # Substitui valores das variaveis 
+  df_dados <- df_dados %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "ITAPAJE", "ITAPAGE")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "NOVA JAGUARIBARA", "JAGUARIBARA")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "DEP. IRAPUAN PINHEIRO", "DEPUTADO IRAPUAN PINHEIRO")) 
+  
+  # for(nlinha in 1:nrow(df_dados)) {
+  #   if(!is.na(df_dados[nlinha, 3])) {
+  #     if ("ITAPAJE" %in% inconsistencias) {
+  #       if(df_dados[nlinha, 3] == inconsistencias[1]) df_dados[nlinha, 3] <- "ITAPAGE"
+  #     }
+  #     if ("NOVA JAGUARIBARA" %in% inconsistencias) {
+  #       if(df_dados[nlinha, 3] == inconsistencias[2]) df_dados[nlinha, 3] <- "JAGUARIBARA"
+  #     }
+  #     if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
+  #       if(df_dados[nlinha, 3] == inconsistencias[3]) df_dados[nlinha, 3] <- "DEPUTADO IRAPUAN PINHEIRO"
+  #     }
+  #   }
+  # }
   
   # Merge dos data frames com geolocalizacao por municipio
-  df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_CRIME'), by.y=c('NM_MUNICIP'))
+  df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('NM_MUNICIP'))
   
-  # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
-    # Reordena coluna MUNICIPIO_CRIME 
+  # Restaura formato da coluna MUNICIPIO_HOMICIDIO
+  df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
   # retorna dadta frame
   return(df_merge) 
 }
 
-# Funcao para merge da incidencia de crime por municipio
-merge_dados_incidencia_crime <- function(df_dados) {
-
-  # Converte variavel para maiusculo
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+# Funcao para criar variavel mes/ano
+merge_variavel_mesano <- function(df_dados) {
   
-  df_incidencia <- df_dados %>%
-    group_by(MUNICIPIO_CRIME) %>%
-    summarise(INCIDENCIA_CRIME = n()) %>%
-    distinct()
-
-  df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO_CRIME'))
+  # Cria variavel mes/ano
+  df_var_mesano <- df_dados %>% 
+  mutate(MES_ANO = format.Date(as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y"), "%m/%Y")) 
   
-  # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
-    # Reordena coluna MUNICIPIO_CRIME 
-    .[,c(2,3,1,4:ncol(.))]
-  
-  return(df_merge)
+  return(df_var_mesano)
 }
 
 # Funcao para merge de coluna de indice populacional 
@@ -553,21 +562,21 @@ merge_dados_populacao <- function(df_dados) {
   censo_pop <- suppressMessages(readxl::read_xls(
     file.path(".", dir_auxiliares, "Censo_Demografico_2010/total_populacao_ceara.xls"), col_names = FALSE))[2:185,][,-c(1,3,4,5,6,7)] %>% 
     rename(MUNICIPIO = "...2", POPULACAO = "...8") %>% 
-    mutate(POPULACAO = format(as.numeric(POPULACAO), big.mark=",", trim = TRUE)) %>% 
+    mutate(POPULACAO = as.numeric(POPULACAO)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
   
   # Converte variavel para maiusculo
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, censo_pop$MUNICIPIO)
+  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, censo_pop$MUNICIPIO)
   
   # Merge dos data frames com populacao por municipio
-  df_merge <- merge(df_dados, censo_pop, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  df_merge <- merge(df_dados, censo_pop, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
-  # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
-    # Reordena coluna MUNICIPIO_CRIME 
+  # Restaura formato da coluna MUNICIPIO_HOMICIDIO
+  df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
@@ -578,21 +587,21 @@ merge_dados_idhm <- function(df_dados) {
   idhm <- suppressMessages(readxl::read_xlsx(
     file.path(".", dir_auxiliares, "Atlas_Desenvolvimento_Humano_Brasil_2010/AtlasBrasil_Consulta.xlsx"), col_names = FALSE))[3:186,][,c(2:3)] %>% 
     rename(MUNICIPIO = "...2", IDHM = "...3") %>% 
-    mutate(IDHM = ifelse(nchar(IDHM)>4, as.numeric(IDHM), as.character(IDHM)))  %>%
+    mutate(IDHM = as.numeric(IDHM)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
   
   # Converte variavel para maiusculo
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, idhm$MUNICIPIO)
+  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, idhm$MUNICIPIO)
   
   # Merge dos data frames com IDH por municipio
-  df_merge <- merge(df_dados, idhm, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  df_merge <- merge(df_dados, idhm, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
-  # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
-    # Reordena coluna MUNICIPIO_CRIME 
+  # Restaura formato da coluna MUNICIPIO_HOMICIDIO
+  df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
@@ -603,22 +612,119 @@ merge_dados_pib <- function(df_dados) {
   pib_percapita <- suppressMessages(readxl::read_xls(
     file.path(".", dir_auxiliares, "Pib_Municipios_2010/PibMunicipal2006_2010.xls"), col_names = FALSE))[913:1096,][,-c(2:6)] %>% 
     rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
-    mutate(PIB_PERCAPITA = as.character(as.numeric(PIB_PERCAPITA))) %>% 
+    mutate(PIB_PERCAPITA = as.numeric(PIB_PERCAPITA)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-
+  
   # Converte variavel para maiusculo
-  df_dados <- df_dados %>% mutate(MUNICIPIO_CRIME = toupper(MUNICIPIO_CRIME))
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_CRIME, pib_percapita$MUNICIPIO)
+  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, pib_percapita$MUNICIPIO)
   
   # Merge dos data frames com PIB por municipio
-  df_merge <- merge(df_dados, pib_percapita, by.x=c('MUNICIPIO_CRIME'), by.y=c('MUNICIPIO'))
+  df_merge <- merge(df_dados, pib_percapita, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
-  # Restaura formato da coluna MUNICIPIO_CRIME
-  df_merge <- df_merge %>% mutate(MUNICIPIO_CRIME = str_to_title(MUNICIPIO_CRIME)) %>% 
-    # Reordena coluna MUNICIPIO_CRIME 
+  # Restaura formato da coluna MUNICIPIO_HOMICIDIO
+  df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
   return(df_merge)
 }
+
+# Funcao para criar variavel incidencia de homicidio
+merge_variavel_incidencia_homicidio <- function(df_dados) {
+  
+  # Converte variavel para maiusculo
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
+  
+  # obtem o numero de incidencia
+  df_incidencia <- df_dados %>%
+    group_by(MUNICIPIO_HOMICIDIO) %>%
+    summarise(INCIDENCIA_HOMICIDIO = n()) %>%
+    distinct()
+  
+  df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO_HOMICIDIO'))
+  
+  # Restaura formato da coluna MUNICIPIO_HOMICIDIO e restaura formato da variavel
+  df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    # Reordena coluna MUNICIPIO_HOMICIDIO 
+    .[,c(2,3,1,4:ncol(.))]
+  
+  return(df_merge)
+}
+
+# Funcao para criar variavel incidencia de homicidio por 100 mil
+merge_var_incidencia_homicidio_porcemmil <- function(df_dados) {
+  # obtem o calculo do numero de incidencia por cem mil
+  df_var_incidencia_cemmil <- df_dados %>%
+    group_by(MUNICIPIO_HOMICIDIO) %>%
+    mutate(INCIDENCIA_HOMICIDIO_PORCEMMIL = (INCIDENCIA_HOMICIDIO / POPULACAO) * 100000 ) 
+  
+  return(df_var_incidencia_cemmil)
+}
+
+# Funcao para criar variavel incidencia de homicidio por ano
+merge_dados_incidencia_homicidio_porano <- function(df_dados) {
+  
+  # obtem total incidencia por ano
+  df_incidencia_homicidio_ano <- df_dados %>% mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y")) %>% 
+    mutate(ano = lubridate::year(DATA_HOMICIDIO)) %>%
+    group_by(ano) %>%
+    #arrange(ano) %>%
+    mutate(INCIDENCIA_HOMICIDIO_POR_ANO = n()) %>% 
+    .[,-c(ncol(.)-1)]
+  
+  return(df_incidencia_homicidio_ano)
+}
+
+# Funcao para criar variavel incidencia de homicidio por ano/sexo
+merge_dados_incidencia_homicidio_poranosexo <- function(df_dados) {
+  
+  # obtem total incidencia por ano/sexo
+  df_incidencia_homicidio_anosexo <- df_dados %>% mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y")) %>% 
+    mutate(ano = lubridate::year(DATA_HOMICIDIO)) %>%
+    group_by(ano, SEXO) %>%
+    #arrange(SEXO) %>%
+    mutate(INCID_HOMI_POR_ANOSEXO = n()) %>% 
+    select(-ano) 
+    #.[,-c(ncol(.)-1)]
+  
+  return(df_incidencia_homicidio_anosexo)
+}
+
+# Funcao para criar variavel incidencia de homicidio por ano/sexo/municipio
+merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
+  
+  # obtem total incidencia por ano/sexo/municipio
+  df_incidencia_homicidio_anosexomunicipio <- df_dados %>% mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y")) %>% 
+    mutate(ano = lubridate::year(DATA_HOMICIDIO)) %>%
+    group_by(ano, SEXO, MUNICIPIO_HOMICIDIO) %>%
+    arrange(ano, SEXO, MUNICIPIO_HOMICIDIO) %>%
+    mutate(INCID_HOMI_POR_ANOSEXOMUNICIPIO = n()) %>% 
+    select(-ano) 
+    #.[,-c(ncol(.)-1)]
+  
+  return(df_incidencia_homicidio_anosexomunicipio)
+}
+
+# Funcao para criar variavel faixa etaria
+merge_var_faixaetaria <- function(df_dados) {
+  
+  # Obtem as faixa etarias
+  idadebreaks <- c(0,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,150)
+  idadelabels <- c("0-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95-99","+ de 100")
+  data.table::setDT(df_dados)[,FAIXAETARIA:= cut(IDADE, breaks = idadebreaks, labels = idadelabels, right = FALSE)]
+  
+  df_faixa_etarias <- df_dados %>% 
+    mutate(FAIXAETARIA = forcats::fct_explicit_na(FAIXAETARIA)) %>% 
+    group_by(IDADE, FAIXAETARIA) %>%
+    arrange(IDADE, FAIXAETARIA) %>%
+    mutate(INCID_FAIXAETARIA = n())
+  
+  return(df_faixa_etarias)
+}
+  
+  
+  
+  

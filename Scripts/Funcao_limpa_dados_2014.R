@@ -9,15 +9,7 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
   
   df_nome_docs <- rbind(data_frame_meses[2])
   total_pgs <- 0
-  
-  # ######################### temp
-  # ano <- lista_anos[5, 2]
-  # data_frame_meses <- df_lista_meses
-  # nome <- "JANEIRO-2014"
-  # glimpse(m_tabelas)
-  # View(m_tabela)
-  # ######################### temp
-  
+
   for (num_doc in 1:nrow(df_nome_docs)) {
     nome <- as.character(data_frame_meses[num_doc,][2]$mes)
     arquivo <- file.path(".", dir_arquivos, ano, paste0(nome, ".pdf"))
@@ -593,9 +585,10 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
     gsub("-nov-", "/11/", .) %>% 
     gsub("-dez-", "/12/", .)
   
-  # Padroniza valores da coluna 5, 9 e 10  
+  # Padroniza valores da coluna 4, 5, 9 e 10  
+  df_tabela <- df_tabela %>% mutate(V3 = as.character(V3),V4 = as.character(V4),V5 = as.character(V5),V9 = as.character(V9))
   df_tabela <- padroniza_colunas_inconsistentes(df_tabela)
-  
+
   print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
   print(paste(nrow(df_tabela), "Linhas", sep = " ")) 
   

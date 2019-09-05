@@ -411,9 +411,11 @@ limpa_dados_2016 <- function(ano, data_frame_meses) {
   }
 
   # Padroniza o formato da data
-  df_tabela[,6] <- df_tabela[,6] %>% gsub("-Feb-", "/02/", .)
+  df_tabela[,6] <- df_tabela[,6] %>% 
+    gsub("-Feb-", "/02/", .)
   
-  # Padroniza valores da coluna 5, 9 e 10  
+  # Padroniza valores da coluna 4, 5, 9 e 10  
+  df_tabela <- df_tabela %>% mutate(V3 = as.character(V3),V4 = as.character(V4),V5 = as.character(V5),V9 = as.character(V9))
   df_tabela <- padroniza_colunas_inconsistentes(df_tabela)
   
   print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 

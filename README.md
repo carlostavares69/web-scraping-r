@@ -3,7 +3,6 @@
 **Autor:** Erivando Sena  
 **E-mail:** erivandosena@gmail.com  
 
-##
 Data scraping trata-se de uma técnica computacional para obter dados disponibilizados em páginas web visíveis de maneira estática ou dinâmica em forma de textos, listas ou através de documentos digitais. Os dados extraídos são estruturados, analisados e distribuidos em formatos padrão como CSV, XLSX, etc.
 
 ## LOCAL ALVO DOS DADOS 
@@ -39,4 +38,3 @@ R Core Team (2019). **R: A language and environment for statistical computing.**
 RStudio Team (2018). **RStudio: Integrated Development for R.** RStudio, Inc., Boston, MA URL http://www.rstudio.com/.  
 
 LAVOR, T. M. O. **Open Data Day Fortaleza 2019: os highlights do evento.** Disponível em: < http://br.okfn.org/2019/04/02/open-data-day-fortaleza-2019-os-highlights-do-evento/ > Acesso em: 05 Out. 2019.
-
