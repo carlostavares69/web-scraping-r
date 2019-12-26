@@ -1,6 +1,12 @@
-#===========================================================================================
-#                                 LIMPEZA DADOS 2017                                      
-#-------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------#
+# RASPAGEM DE DADOS (Data Scraping)
+#
+# Script:      Funcao_limpa_dados_2017.R - Funcoes necessarias para limpeza dos dados de 2017.
+# Autor:       Erivando Sena
+# E-mail:      erivandosena@gmail.com 
+# Data:        04/09/2019
+# Atualizado:  22/12/2019
+##-------------------------------------------------------------------------------------------#
 
 # Funcao de limpeza dos dados da matriz por documento baixado e retorna um data frame
 limpa_dados_2017 <- function(ano, data_frame_meses) {

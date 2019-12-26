@@ -1,7 +1,16 @@
-#===========================================================================================
-#                                   COLETA                                      
-#-------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------#
+# RASPAGEM DE DADOS (Data Scraping)
+#
+# Script:      Funcoes.R - Declara todas a funcoes necessarias nas analises.
+# Autor:       Erivando Sena
+# E-mail:      erivandosena@gmail.com 
+# Data:        20/08/2019
+# Atualizado:  19/12/2019
+##-------------------------------------------------------------------------------------------#
 
+##############################################################################################
+# COLETA                                      
+##############################################################################################
 # Funcao que extrai informacoes de ano do codigo html da pagina
 extrai_lista_anos <- function(url_site) {
   pagina_html <- xml2::read_html(url_site)
@@ -13,6 +22,14 @@ extrai_lista_anos <- function(url_site) {
     na.omit(.) %>% # exclui missings
     .[-c(nrow(.)),] # remove ultima linha
   
+    # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+    ####################################################################################################
+    ano_2019 <- matrix(data = c("box","https://www.sspds.ce.gov.br/estatisticas-2/"),ncol=2, byrow=TRUE)
+    colnames(ano_2019) <- c("class","href")
+    df_lista_urls <- rbind(ano_2019, df_lista_urls)
+    df_lista_urls$href <- as.character(df_lista_urls$href)
+    ####################################################################################################
+
   df_lista_titulos <- pagina_html %>% #obtem codigo html da pagina
     rvest::html_nodes('.grid p') %>% # Filtro das tags "h3" (nomes dos meses de cada link)desejadas
     rvest::html_text() %>% # Converte a relacao de nomes em texto
@@ -22,6 +39,13 @@ extrai_lista_anos <- function(url_site) {
     .[-length(.)] %>% # remove ano 2013
     as.data.frame(.) %>% # Converte a lista de titulos em data frame
     setNames(., "ano") # O "." significa trazer o data frame anterior e e atribui o nome "ano" da coluna do dataframe
+
+    # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+    ####################################################################################################
+    ano_2019 <- matrix(data = c("2019"),ncol=1, byrow=TRUE)
+    colnames(ano_2019) <- c("ano")
+    df_lista_titulos <- rbind(ano_2019, df_lista_titulos)
+    ####################################################################################################
     
   # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
   df_urls_anos <- data.frame(df_lista_urls, df_lista_titulos) 
@@ -29,7 +53,7 @@ extrai_lista_anos <- function(url_site) {
   excluir <- c("class", "target") # Lista de colunas a serem excluidos"
   df_urls_anos <- df_urls_anos[,!(names(df_urls_anos) %in% excluir)] # Excluir as colunas "class" e/ou "target" do data frame
   df_urls_anos[,1][df_urls_anos[, 1] == "#"] <- NA # substituii cerquilha,"#", em missing
-  
+
   return(df_urls_anos)
 }
 
@@ -115,7 +139,7 @@ extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
 # Funcao que baixa lista de arquivos por ano 
 obtem_arquivos <- function() {
   anos <- extrai_lista_anos(URL_site)
-  
+
   for(indice in 1:nrow(anos)) {
     print(paste("Lendo codigo HTML da pagina Web:", anos[indice,1], "-", anos[indice,2], sep = " "))
     # Executa a funcao que obtem um data frame com urls e nomes dos documentos
@@ -132,53 +156,110 @@ exporta_csv <- function(df_limpo, nome_csv=NA) {
   # classes dos tipos de colunas
   classes_colunas <- sapply(df_limpo, class)
   
-  # salvar dados em arquivo CSV
+  # Salvar dados em arquivo CSV
   if(is.na(nome_csv)) {
-    nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_arquivo, ".csv"))
+    nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_csv, ".csv"))
   } else {
     nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_csv))
   }
-
+  print(nome_arquivo_csv)
+  
   # Escrever arquivo CSV
   readr::write_excel_csv2(x = df_limpo, path = nome_arquivo_csv, na = "NA", col_names = TRUE, delim = ";")
 }
 
 # Funcao que obtem dados do arquivo CSV
-importa_csv <- function(arquivo_csv) {
+importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
+  
+  # status: original | merges | personalizado
+  
+  # Abrir dados em arquivo CSV
+  if(is.na(local_arquivo_csv)) {
+    nome_arquivo_csv <- base::file.path(".", dir_dados, nome_csv)
+  } else {
+    nome_arquivo_csv <- base::file.path(str_replace(paste(local_arquivo_csv,"/",nome_csv)," / ","/"))
+  }
+  print(nome_arquivo_csv)
+  
   # classes dos tipos de colunas
-  classes_colunas <- cols(
-    ID = col_number(), 
-    AIS = col_character(), 
-    MUNICIPIO_HOMICIDIO = col_character(), 
-    NATUREZA_HOMICIDIO = col_character(), 
-    ARMA_UTILIZADA = col_character(), 
-    DATA_HOMICIDIO = col_character(), 
-    NOME_VITIMA = col_character(), 
-    GUIA_CADAVERICA = col_character(), 
-    SEXO = col_character(), 
-    IDADE = col_number(), 
-    LONGITUDE = col_number(), 
-    LATITUDE = col_number(), 
-    POPULACAO = col_number(), 
-    IDHM = col_number(), 
-    PIB_PERCAPITA = col_number(),
-    MES_ANO = col_character(), 
-    INCIDENCIA_HOMICIDIO = col_number()
-  )
+  if(status_classes == "original") {
+    classes_colunas <- cols(
+      ID = col_number(), 
+      AIS = col_character(), 
+      MUNICIPIO_HOMICIDIO = col_character(), 
+      NATUREZA_HOMICIDIO = col_character(), 
+      ARMA_UTILIZADA = col_character(), 
+      DATA_HOMICIDIO = col_character(), 
+      NOME_VITIMA = col_character(), 
+      GUIA_CADAVERICA = col_character(), 
+      SEXO = col_character(), 
+      IDADE = col_number()
+    )
+  } else if(status_classes == "merges") {
+    classes_colunas <- cols(
+      ID = col_number(), 
+      AIS = col_character(), 
+      MUNICIPIO_HOMICIDIO = col_character(), 
+      NATUREZA_HOMICIDIO = col_character(), 
+      ARMA_UTILIZADA = col_character(), 
+      DATA_HOMICIDIO = col_character(), 
+      NOME_VITIMA = col_character(), 
+      GUIA_CADAVERICA = col_character(), 
+      SEXO = col_character(), 
+      IDADE = col_number(), 
+      INCIDENCIA_HOMICIDIO = col_number(),
+      MES_ANO = col_character(),
+      FAIXA_ETARIA = col_character(),
+      GRUPO_MUNICIPIO = col_character(),
+      ARMA_DE_FOGO = col_character(),
+      GRUPO_ARMA_UTILIZADA = col_character(),
+      POPULACAO = col_number(),
+      IDHM = col_number(),
+      PIB_PERCAPITA = col_number(),
+      LATITUDE = col_number(),
+      LONGITUDE = col_number()
+    )
+  } else if(status_classes == "personalizado") {
+    classes_colunas <- cols(
+      ID = col_number(), 
+      #AIS = col_character(), 
+      MUNICIPIO_HOMICIDIO = col_character(), 
+      NATUREZA_HOMICIDIO = col_character(), 
+      ARMA_UTILIZADA = col_character(), 
+      DATA_HOMICIDIO = col_character(), 
+      #NOME_VITIMA = col_character(), 
+      #GUIA_CADAVERICA = col_character(), 
+      SEXO = col_character(), 
+      IDADE = col_number(), 
+      INCIDENCIA_HOMICIDIO = col_number(),
+      MES_ANO = col_character(),
+      FAIXA_ETARIA = col_character(),
+      GRUPO_MUNICIPIO = col_character(),
+      ARMA_DE_FOGO = col_character(),
+      GRUPO_ARMA_UTILIZADA = col_character(),
+      POPULACAO = col_number(),
+      IDHM = col_number(),
+      PIB_PERCAPITA = col_number(),
+      LATITUDE = col_number(),
+      LONGITUDE = col_number()
+    )
+  }
+  
   # Importanto CSV
-  dados_csv <- readr::read_delim(file = arquivo_csv, 
-                                 delim = ";", 
-                                 na = "NA",
-                                 col_names = TRUE,
-                                 col_types = classes_colunas, 
-                                 locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
-                                 progress = show_progress())
+  dados_csv <- readr::read_delim(file = nome_arquivo_csv, 
+                                delim = ";",
+                                na = "NA",
+                                col_names = TRUE,
+                                col_types = classes_colunas,
+                                #locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
+                                locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ",", grouping_mark = ".", date_format = "%d/%m/%Y"),
+                                progress = show_progress())
   return(dados_csv)
 }
 
-#===========================================================================================
-#                                 LIMPEZA                                      
-#-------------------------------------------------------------------------------------------
+##############################################################################################
+# LIMPEZA                                      
+##############################################################################################
 # Funcao para remover acentos
 remove_acentos <- function(obj_str) {
   if(!is.character(obj_str)) {
@@ -202,15 +283,15 @@ padroniza_dados <- function(df_dados) {
   vars_factor <- lapply(df_dados, class) == "factor"
   df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
   
-  # Remove espacos em branco na esquerda/direita das variaveis
+  # Remove espacos em branco na esquerda/direita das variaveis/remove acentos
   df_dados <- df_dados %>% 
-    mutate(MUNICIPIO_HOMICIDIO = str_trim(MUNICIPIO_HOMICIDIO), 
+    mutate(MUNICIPIO_HOMICIDIO =  remove_acentos(str_trim(MUNICIPIO_HOMICIDIO)), 
            NATUREZA_HOMICIDIO = remove_acentos(str_trim(NATUREZA_HOMICIDIO)), 
-           ARMA_UTILIZADA = str_trim(ARMA_UTILIZADA), 
+           ARMA_UTILIZADA =  remove_acentos(str_trim(ARMA_UTILIZADA)), 
            DATA_HOMICIDIO = str_trim(DATA_HOMICIDIO), 
-           NOME_VITIMA = str_trim(NOME_VITIMA), 
+           NOME_VITIMA =  remove_acentos(str_trim(NOME_VITIMA)), 
            GUIA_CADAVERICA = str_trim(GUIA_CADAVERICA), 
-           SEXO = str_trim(SEXO), 
+           SEXO = remove_acentos(str_trim(SEXO)), 
            IDADE = str_trim(IDADE))
   
   # Converte caracteres da variaveis para formato titulo
@@ -218,8 +299,8 @@ padroniza_dados <- function(df_dados) {
   
   # Atribui NA para variaveis com valores desconhecidos
   df_dados <- df_dados %>%
-    mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Não Informado" | ARMA_UTILIZADA == "Outros", NA)) %>%
-    mutate(SEXO = replace(SEXO, SEXO == "Não Identificado", NA)) 
+    mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Nao Informado", NA)) %>%
+    mutate(SEXO = replace(SEXO, SEXO == "Nao Identificado", NA)) 
 
   return(df_dados)
 }
@@ -351,9 +432,9 @@ exclui_linhas_matriz <- function(m_tabela) {
 padroniza_colunas_inconsistentes <- function(df_tabela) {
   
   # Padroniza valores da coluna 5, 9 e 10  
-  tipo1 <- c("ARMA DE FOGO E ARMA")
+  tipo1 <- c("ARMA DE FOGO E ARMA", "Arma de fogo")
   tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO")
-  tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA")
+  tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA", "Arma branca")
   tipo4 <- c("Outros meios","EOUTROS","OUTRO","ARMA OUTROS","Outro","OUTRO TIPO","AMA OUTROS")
   tipo5 <- c("Meio não informado","NÃO INFORMAD","NI")
   tipo6 <- c("NÃO IDENTIFICAD-O","NI", "I", "-")
@@ -434,42 +515,50 @@ realiza_limpeza_dados <- function() {
   # Data frames necessarios
   lista_anos <- extrai_lista_anos(URL_site)
   vetor_anos <- lista_anos$ano %>% as.vector(.) %>% as.numeric(.)
-
+  
+  
   # Obtem data frames por ano com dados limpos
-  if(2018 %in% vetor_anos) {
+  if(2019 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[1, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
-    dados_homicidio_ce_2018 <- limpa_dados_2018(lista_anos[1, 2], df_lista_meses)  
+    dados_homicidio_ce_2019 <- limpa_dados_2019(lista_anos[1, 2], df_lista_meses)  
   }
-  if(2017 %in% vetor_anos) {
+  if(2018 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
-    dados_homicidio_ce_2017 <- limpa_dados_2017(lista_anos[2, 2], df_lista_meses) 
+    dados_homicidio_ce_2018 <- limpa_dados_2018(lista_anos[2, 2], df_lista_meses)  
   }
-  if(2016 %in% vetor_anos) {
+  if(2017 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    dados_homicidio_ce_2016 <- limpa_dados_2016(lista_anos[3, 2], df_lista_meses) 
+    dados_homicidio_ce_2017 <- limpa_dados_2017(lista_anos[3, 2], df_lista_meses) 
   }
-  if(2015 %in% vetor_anos) {
+  if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[4, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[4, 1])
-    dados_homicidio_ce_2015 <- limpa_dados_2015(lista_anos[4, 2], df_lista_meses) 
+    dados_homicidio_ce_2016 <- limpa_dados_2016(lista_anos[4, 2], df_lista_meses) 
   }
-  if(2014 %in% vetor_anos) {
+  if(2015 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
     df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    dados_homicidio_ce_2014 <- limpa_dados_2014(lista_anos[5, 2], df_lista_meses) 
+    dados_homicidio_ce_2015 <- limpa_dados_2015(lista_anos[5, 2], df_lista_meses) 
+  }
+  if(2014 %in% vetor_anos) {
+    print(paste("Limpando dados de", lista_anos[6, 2], sep = " "))
+    df_lista_meses <- extrai_lista_documentos(lista_anos[6, 1])
+    dados_homicidio_ce_2014 <- limpa_dados_2014(lista_anos[6, 2], df_lista_meses) 
   }
   
   # Merge dos data frames, inclusao de cabecalho e reconstrucao da variavel ID
-  dados_homicidio_ce_merge_anos <- rbind(dados_homicidio_ce_2018, 
-                                     dados_homicidio_ce_2017, 
-                                     dados_homicidio_ce_2016, 
-                                     dados_homicidio_ce_2015,
-                                     dados_homicidio_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
+  dados_homicidio_ce_merge_anos <- rbind(dados_homicidio_ce_2019,
+                                         dados_homicidio_ce_2018, 
+                                         dados_homicidio_ce_2017, 
+                                         dados_homicidio_ce_2016, 
+                                         dados_homicidio_ce_2015,
+                                         dados_homicidio_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
   
   # Cria variaveis globais dos data frames
+  assign('dados_homicidio_ce_2019', cria_id( adiciona_cabecalho( dados_homicidio_ce_2019 ) ), envir=.GlobalEnv)
   assign('dados_homicidio_ce_2018', cria_id( adiciona_cabecalho( dados_homicidio_ce_2018 ) ), envir=.GlobalEnv)
   assign('dados_homicidio_ce_2017', cria_id( adiciona_cabecalho( dados_homicidio_ce_2017 ) ), envir=.GlobalEnv)
   assign('dados_homicidio_ce_2016', cria_id( adiciona_cabecalho( dados_homicidio_ce_2016 ) ), envir=.GlobalEnv)
@@ -479,10 +568,9 @@ realiza_limpeza_dados <- function() {
   return(dados_homicidio_ce_merge_anos)
 }
 
-#===========================================================================================
-#                             TRATAMENTO
-#-------------------------------------------------------------------------------------------
-
+##############################################################################################
+# TRATAMENTO
+##############################################################################################
 # Funcao que compara diferencas entre duas colunas e retona uma lista
 verifica_inconsistencias <- function(df_col1, df_col2) {
   # verifica inconsistencia entre as colunas de merge
@@ -510,7 +598,7 @@ merge_dados_geo <- function(df_dados) {
     mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
 
   # Converte variavel para maiusculo e remove acentuacao
-  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = remove_acentos(toupper(MUNICIPIO_HOMICIDIO)))
+  df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
   inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, df_geo$NM_MUNICIP)
@@ -540,6 +628,7 @@ merge_dados_geo <- function(df_dados) {
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO
   df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    arrange(ID) %>%
     # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
@@ -547,6 +636,59 @@ merge_dados_geo <- function(df_dados) {
   return(df_merge) 
 }
 
+# Funcao para merge grupo municipios
+merge_grupo_municipios <- function(df_dados) {
+  # 19 Municipios da Região Metropolitana de Fortaleza
+  municipios_RMF <- c("Aquiraz","Cascavel","Caucaia","Chorozinho","Eusebio","Fortaleza","Guaiuba",
+                      "Horizonte","Itaitinga","Maracanau","Maranguape","Pacajus","Pacatuba","Pindoretama",
+                      "Sao Goncalo Do Amarante","Sao Luis Do Curu","Paraipaba","Paracuru","Trairi")
+  
+  # municipios_RMF <- c("Aquiraz","Cascavel","Caucaia","Chorozinho","Eusébio","Fortaleza","Guaiúba",
+  #                     "Horizonte","Itaitinga","Maracanaú","Maranguape","Pacajus","Pacatuba","Pindoretama",
+  #                     "São Gonçalo Do Amarante","São Luís Do Curu","Paraipaba","Paracuru","Trairi")
+  
+  # nega o TRUE de %in%
+  `%notin%` <- Negate(`%in%`) 
+  
+  # Cria nova variavel com grupo de municipios
+  df_dados <- df_dados %>%
+    mutate('GRUPO_MUNICIPIO' = case_when(MUNICIPIO_HOMICIDIO == 'Fortaleza' ~ "Capital", 
+                                         MUNICIPIO_HOMICIDIO %in% municipios_RMF ~ "Regiao Metropolitana", 
+                                         MUNICIPIO_HOMICIDIO %notin% municipios_RMF ~ "Interior"))
+  return(df_dados)
+}
+
+# Funcao para merge grupo idades
+merge_grupo_idades <- function(df_dados){
+  # Cria nova variavel para grupo de idades.
+  df_dados <- df_dados %>%
+    mutate(
+      #Idade = ifelse(is.na(IDADE), mean(full$IDADE, na.rm=TRUE), IDADE), # Media das idades (Substitui idade NA pela media das idades)
+      'FAIXA_ETARIA' = case_when(IDADE < 13 ~ "0 a 12 anos", 
+                                 IDADE >= 13 & IDADE < 18 ~ "13 a 17 anos", 
+                                 IDADE >= 18 & IDADE < 60 ~ "18 a 59 anos", 
+                                 IDADE >= 60 ~ "60 anos a cima"))
+  return(df_dados)
+}
+
+# Funcao para merge do tipo de arma de fogo
+merge_grupo_arma_fogo <- function(df_dados) {
+  # Cria nova variavel com teste de Bernoulli para o tipo de Arma De Fogo
+  df_dados <- df_dados %>% 
+    mutate(ARMA_DE_FOGO = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Sim", ARMA_UTILIZADA != "Arma De Fogo" ~ "Nao")) 
+    # %>% arrange(desc(ARMA_DE_FOGO))
+  return(df_dados)
+}
+
+# Funcao para merge do tipo de arma utilizada
+merge_grupo_arma_utilizada <- function(df_dados) {
+  # Cria nova variavel para grupo de arma utilizada
+  df_dados <- df_dados %>%
+    mutate('GRUPO_ARMA_UTILIZADA' = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Arma de Fogo", ARMA_UTILIZADA != "Arma De Fogo" ~ "Outros"))
+
+  return(df_dados)
+}
+  
 # Funcao para criar variavel mes/ano
 merge_variavel_mesano <- function(df_dados) {
   
@@ -569,13 +711,20 @@ merge_dados_populacao <- function(df_dados) {
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, censo_pop$MUNICIPIO)
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, censo_pop$MUNICIPIO)
+  
+  # Substitui valores das variaveis 
+  df_dados <- df_dados %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "ITAPAJE", "ITAPAGE")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "NOVA JAGUARIBARA", "JAGUARIBARA")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "DEP. IRAPUAN PINHEIRO", "DEPUTADO IRAPUAN PINHEIRO")) 
   
   # Merge dos data frames com populacao por municipio
   df_merge <- merge(df_dados, censo_pop, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO
   df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    arrange(ID) %>%
     # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
@@ -594,13 +743,20 @@ merge_dados_idhm <- function(df_dados) {
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, idhm$MUNICIPIO)
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, idhm$MUNICIPIO)
+  
+  # Substitui valores das variaveis 
+  df_dados <- df_dados %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "ITAPAJE", "ITAPAGE")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "NOVA JAGUARIBARA", "JAGUARIBARA")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "DEP. IRAPUAN PINHEIRO", "DEPUTADO IRAPUAN PINHEIRO")) 
   
   # Merge dos data frames com IDH por municipio
   df_merge <- merge(df_dados, idhm, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO
   df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    arrange(ID) %>%
     # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
@@ -614,18 +770,25 @@ merge_dados_pib <- function(df_dados) {
     rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
     mutate(PIB_PERCAPITA = as.numeric(PIB_PERCAPITA)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-  
+
   # Converte variavel para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
-  #inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, pib_percapita$MUNICIPIO)
+  inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, pib_percapita$MUNICIPIO)
+  
+  # Substitui valores das variaveis 
+  df_dados <- df_dados %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "ITAPAJE", "ITAPAGE")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "NOVA JAGUARIBARA", "JAGUARIBARA")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "DEP. IRAPUAN PINHEIRO", "DEPUTADO IRAPUAN PINHEIRO")) 
   
   # Merge dos data frames com PIB por municipio
   df_merge <- merge(df_dados, pib_percapita, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO'))
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO
   df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    arrange(ID) %>%
     # Reordena coluna MUNICIPIO_HOMICIDIO 
     .[,c(2,3,1,4:ncol(.))]
   
@@ -634,8 +797,8 @@ merge_dados_pib <- function(df_dados) {
 
 # Funcao para criar variavel incidencia de homicidio
 merge_variavel_incidencia_homicidio <- function(df_dados) {
-  
-  # Converte variavel para maiusculo
+
+  # Converte para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # obtem o numero de incidencia
@@ -648,8 +811,9 @@ merge_variavel_incidencia_homicidio <- function(df_dados) {
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO e restaura formato da variavel
   df_merge <- df_merge %>% mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO)) %>% 
+    arrange(ID) %>%
     # Reordena coluna MUNICIPIO_HOMICIDIO 
-    .[,c(2,3,1,4:ncol(.))]
+    .[,c(2,3,1,4:ncol(.))] 
   
   return(df_merge)
 }
@@ -708,23 +872,66 @@ merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
   return(df_incidencia_homicidio_anosexomunicipio)
 }
 
-# Funcao para criar variavel faixa etaria
-merge_var_faixaetaria <- function(df_dados) {
+# # Funcao para criar variavel faixa etaria
+# merge_var_faixaetaria <- function(df_dados) {
+#   
+#   # Obtem as faixa etarias
+#   idadebreaks <- c(0,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,150)
+#   idadelabels <- c("0-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95-99","+ de 100")
+#   data.table::setDT(df_dados)[,FAIXAETARIA:= cut(IDADE, breaks = idadebreaks, labels = idadelabels, right = FALSE)]
+#   
+#   df_faixa_etarias <- df_dados %>% 
+#     mutate(FAIXAETARIA = forcats::fct_explicit_na(FAIXAETARIA)) %>% 
+#     group_by(IDADE, FAIXAETARIA) %>%
+#     arrange(IDADE, FAIXAETARIA) %>%
+#     mutate(INCID_FAIXAETARIA = n())
+#   
+#   return(df_faixa_etarias)
+# }
+
+# Funcao que faz os merges no data frame limpo
+executa_merges <- function(df_dados_imputado) {
+  # INCIDENCIA_HOMICIDIO
+  df_dados_merges <- merge_variavel_incidencia_homicidio(df_dados_imputado)
   
-  # Obtem as faixa etarias
-  idadebreaks <- c(0,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,150)
-  idadelabels <- c("0-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95-99","+ de 100")
-  data.table::setDT(df_dados)[,FAIXAETARIA:= cut(IDADE, breaks = idadebreaks, labels = idadelabels, right = FALSE)]
+  # MES_ANO
+  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
   
-  df_faixa_etarias <- df_dados %>% 
-    mutate(FAIXAETARIA = forcats::fct_explicit_na(FAIXAETARIA)) %>% 
-    group_by(IDADE, FAIXAETARIA) %>%
-    arrange(IDADE, FAIXAETARIA) %>%
-    mutate(INCID_FAIXAETARIA = n())
+  # FAIXA_ETARIA
+  df_dados_merges <- merge_grupo_idades(df_dados_merges)
   
-  return(df_faixa_etarias)
+  # GRUPO_MUNICIPIO
+  df_dados_merges <- merge_grupo_municipios(df_dados_merges)
+  
+  # ARMA_DE_FOGO
+  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
+  
+  # GRUPO_ARMA_UTILIZADA
+  df_dados_merges <- merge_grupo_arma_utilizada(df_dados_merges)
+  
+  # POPULACAO
+  df_dados_merges <- merge_dados_populacao(df_dados_merges)
+  
+  # IDHM
+  df_dados_merges <- merge_dados_idhm(df_dados_merges)
+  
+  # PIB_PERCAPITA
+  df_dados_merges <- merge_dados_pib(df_dados_merges)
+  
+  # LATITUDE/LONGITUDE
+  df_dados_merges <- merge_dados_geo(df_dados_merges)
+  
+  print("Realizando exportacao para arquivo CSV:")
+  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges",".csv"))
+  
+  return(df_dados_merges)
 }
+
+# Funcao para selecionar dataset por periodos de ano
+obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
   
+  df_dados <- df_dados %>% filter(between(year(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")), ano_inicial, ano_final))
   
-  
+  return(df_dados)
+}
   
