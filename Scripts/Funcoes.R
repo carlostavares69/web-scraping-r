@@ -609,20 +609,6 @@ merge_dados_geo <- function(df_dados) {
     mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "NOVA JAGUARIBARA", "JAGUARIBARA")) %>%
     mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "DEP. IRAPUAN PINHEIRO", "DEPUTADO IRAPUAN PINHEIRO")) 
   
-  # for(nlinha in 1:nrow(df_dados)) {
-  #   if(!is.na(df_dados[nlinha, 3])) {
-  #     if ("ITAPAJE" %in% inconsistencias) {
-  #       if(df_dados[nlinha, 3] == inconsistencias[1]) df_dados[nlinha, 3] <- "ITAPAGE"
-  #     }
-  #     if ("NOVA JAGUARIBARA" %in% inconsistencias) {
-  #       if(df_dados[nlinha, 3] == inconsistencias[2]) df_dados[nlinha, 3] <- "JAGUARIBARA"
-  #     }
-  #     if ("DEP. IRAPUAN PINHEIRO" %in% inconsistencias) {
-  #       if(df_dados[nlinha, 3] == inconsistencias[3]) df_dados[nlinha, 3] <- "DEPUTADO IRAPUAN PINHEIRO"
-  #     }
-  #   }
-  # }
-  
   # Merge dos data frames com geolocalizacao por municipio
   df_merge <- merge(df_dados, df_geo, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('NM_MUNICIP'))
   
@@ -643,11 +629,7 @@ merge_grupo_municipios <- function(df_dados) {
                       "Horizonte","Itaitinga","Maracanau","Maranguape","Pacajus","Pacatuba","Pindoretama",
                       "Sao Goncalo Do Amarante","Sao Luis Do Curu","Paraipaba","Paracuru","Trairi")
   
-  # municipios_RMF <- c("Aquiraz","Cascavel","Caucaia","Chorozinho","Eusébio","Fortaleza","Guaiúba",
-  #                     "Horizonte","Itaitinga","Maracanaú","Maranguape","Pacajus","Pacatuba","Pindoretama",
-  #                     "São Gonçalo Do Amarante","São Luís Do Curu","Paraipaba","Paracuru","Trairi")
-  
-  # nega o TRUE de %in%
+  # Nega o TRUE de %in%
   `%notin%` <- Negate(`%in%`) 
   
   # Cria nova variavel com grupo de municipios
@@ -680,14 +662,25 @@ merge_grupo_arma_fogo <- function(df_dados) {
   return(df_dados)
 }
 
-# Funcao para merge do tipo de arma utilizada
-merge_grupo_arma_utilizada <- function(df_dados) {
-  # Cria nova variavel para grupo de arma utilizada
+# Funcao para merge grupo natureza do homicidio
+merge_grupo_natureza_homicidio <- function(df_dados){
   df_dados <- df_dados %>%
-    mutate('GRUPO_ARMA_UTILIZADA' = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Arma de Fogo", ARMA_UTILIZADA != "Arma De Fogo" ~ "Outros"))
-
+    # Cria nova variavel para grupo de natureza homicidio.
+    mutate('GRUPO_NATUREZA_HOMICIDIO' = case_when(
+      NATUREZA_HOMICIDIO == "Homicidio Doloso" | NATUREZA_HOMICIDIO == "Roubo Seguido De Morte (Latrocinio)" | NATUREZA_HOMICIDIO == "Lesao Corporal Seguida De Morte" | NATUREZA_HOMICIDIO == "Morte Suspeita" ~ "Homicidio", 
+      NATUREZA_HOMICIDIO == "Feminicidio" ~ "Feminicidio")
+    )
   return(df_dados)
 }
+
+# # Funcao para merge do tipo de arma utilizada
+# merge_grupo_arma_utilizada <- function(df_dados) {
+#   # Cria nova variavel para grupo de arma utilizada
+#   df_dados <- df_dados %>%
+#     mutate('GRUPO_ARMA_UTILIZADA' = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Arma de Fogo", ARMA_UTILIZADA != "Arma De Fogo" ~ "Outros"))
+# 
+#   return(df_dados)
+# }
   
 # Funcao para criar variavel mes/ano
 merge_variavel_mesano <- function(df_dados) {
@@ -872,23 +865,6 @@ merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
   return(df_incidencia_homicidio_anosexomunicipio)
 }
 
-# # Funcao para criar variavel faixa etaria
-# merge_var_faixaetaria <- function(df_dados) {
-#   
-#   # Obtem as faixa etarias
-#   idadebreaks <- c(0,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,150)
-#   idadelabels <- c("0-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85-89","90-94","95-99","+ de 100")
-#   data.table::setDT(df_dados)[,FAIXAETARIA:= cut(IDADE, breaks = idadebreaks, labels = idadelabels, right = FALSE)]
-#   
-#   df_faixa_etarias <- df_dados %>% 
-#     mutate(FAIXAETARIA = forcats::fct_explicit_na(FAIXAETARIA)) %>% 
-#     group_by(IDADE, FAIXAETARIA) %>%
-#     arrange(IDADE, FAIXAETARIA) %>%
-#     mutate(INCID_FAIXAETARIA = n())
-#   
-#   return(df_faixa_etarias)
-# }
-
 # Funcao que faz os merges no data frame limpo
 executa_merges <- function(df_dados_imputado) {
   # INCIDENCIA_HOMICIDIO
@@ -900,6 +876,9 @@ executa_merges <- function(df_dados_imputado) {
   # FAIXA_ETARIA
   df_dados_merges <- merge_grupo_idades(df_dados_merges)
   
+  # GRUPO_NATUREZA_HOMICIDIO
+  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
+  
   # GRUPO_MUNICIPIO
   df_dados_merges <- merge_grupo_municipios(df_dados_merges)
   
@@ -907,7 +886,7 @@ executa_merges <- function(df_dados_imputado) {
   df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
   
   # GRUPO_ARMA_UTILIZADA
-  df_dados_merges <- merge_grupo_arma_utilizada(df_dados_merges)
+  #df_dados_merges <- merge_grupo_arma_utilizada(df_dados_merges)
   
   # POPULACAO
   df_dados_merges <- merge_dados_populacao(df_dados_merges)
