@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        04/09/2019
-# Atualizado:  15/12/2019
+# Atualizado:  08/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -16,7 +16,7 @@
 URL_site <- "https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2/"
 
 # Nome padrao para todos os arquivos
-nome_arquivo <- c("Crimes_Ceara_2014-2019")
+nome_arquivo <- c("Homicidios_Ceara_2014-2019")
 # Declara como variavel global
 assign('nome_arquivo', nome_arquivo, envir=.GlobalEnv)
 
@@ -59,47 +59,36 @@ for (diretorio in diretorios) {
 ##############################################################################################
 ## PACOTES
 ##############################################################################################
+
 # Pacotes utilizados na analise.
-pacotes_analise <- c("tidyverse","tabulizer","rvest","readr","stringi","readxl","lubridate",
-                     "rgdal","leaflet","htmlwidgets","ggthemes","forecast","prophet", "mice", 
+pacotes_analise <- c("tidyverse","tabulizer","rvest","stringi","readxl","lubridate","rgdal",
+                     "leaflet","htmlwidgets","ggthemes","forecast","prophet", "mice", 
                      "tabplot", "kableExtra")
 
 # Pacotes necessarios para RMarkdown.
-pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","installr","devtools","rJava")
-
-# # Instalacao de p acotes necessarios para documentos RMarkdown e Analises.
-# if (length(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packages()))) > 0) {
-#   suppressMessages(install.packages(setdiff(c(pacotes_padrao, pacotes_analise), rownames(installed.packages())), dependencies=TRUE))
-#   Sys.setenv(JAVA_HOME='C://Program Files//Java//jre1.8.0_231') # Para 64Bit, substutuir por o local atual do sistema em uso.
-#   # RMarkdown precisa de Pandoc e MiKTeX instalados. https://miktex.org/2.9/setup.
-#   # Instalacao Pandoc e MiKTeX. Cancele manualmente o processo de instalacao caso ja o possua instalados no sistema atual.
-#   if(!require(pacotes_padrao[length(pacotes_padrao)])){
-#     suppressMessages(install.packages(dplyr::setdiff(pacotes_padrao[length(pacotes_padrao)], rownames(installed.packages()))))
-#     require(installr)  
-#     install.pandoc()
-#     install.MikTeX() 
-#   }
-# }
+pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","devtools","rJava")
 
 for (pkg in c(pacotes_padrao, pacotes_analise)) {
   if (!(pkg %in% rownames(installed.packages()))){ 
     print("Instalando pacotes...")
-    install.packages(pkg, dependencies=TRUE)
-    Sys.setenv(JAVA_HOME='C://Program Files//Java//jre1.8.0_231') # Para 64Bit, substutuir por o local atual do sistema em uso.
-    # RMarkdown precisa de Pandoc e MiKTeX instalados. https://miktex.org/2.9/setup.
-    # Instalacao Pandoc e MiKTeX. Cancele manualmente o processo de instalacao caso ja o possua instalados no sistema atual.
-    if(!require(pacotes_padrao[length(pacotes_padrao)])){
-      suppressMessages(install.packages(dplyr::setdiff(pacotes_padrao[length(pacotes_padrao)], rownames(installed.packages())), dependencies=TRUE))
-      require(installr)  
-      install.pandoc()
-      install.MikTeX() 
-    }
-    
+    install.packages(pkg)
   }
-  require(pkg, character.only = TRUE)
+  # RMarkdown precisa de Pandoc e MiKTeX instalados. https://miktex.org/2.9/setup.
+  if(!suppressPackageStartupMessages(require("installr"))) {
+    suppressMessages(install.packages("installr")) 
+    suppressPackageStartupMessages(require(installr))
+    webshot::install_phantomjs()
+    install.pandoc()
+    # Instalacao Pandoc e MiKTeX. Cancele manualmente o processo de instalacao caso ja o possua instalados no sistema atual.
+    install.MikTeX() 
+  }
+  print(paste("Carregando pacote:", pkg, sep = " "))
+  suppressPackageStartupMessages({
+    require(pkg, character.only = TRUE)
+  })
 }
 
-print("Carregando bibliotecas:")
+print("Bibliotecas Carregadas:")
 pacotes <- c(pacotes_padrao, pacotes_analise)
 print(suppressPackageStartupMessages(base::sapply(pacotes, require, character.only=TRUE)))
 rm(pacotes, pkg)

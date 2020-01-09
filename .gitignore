@@ -1,8 +1,8 @@
 packrat/lib*/
-packrat/src/
 .Rproj.user
 .Rhistory
 .RData
 Arquivos/
 Documentos/
 Graficos/
+.zip

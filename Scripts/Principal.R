@@ -1,12 +1,12 @@
 # -------------------------------------------------------------------------------------------#
 # RASPAGEM DE DADOS (Data Scraping)
-# CRIMES VIOLENTOS LETAIS E INTENCIONAIS – CVLI (SSPDS/CE)
+# CRIMES VIOLENTOS LETAIS E INTENCIONAIS – CVLI (SSPDS/CE) (2014 a 2019)
 #
 # Script:      Principal.R - Inicia scripts dependentes, configuracoes, funcoes e analises.
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        03/08/2019
-# Atualizado:  24/12/2019
+# Atualizado:  08/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -68,6 +68,8 @@ df_crime_ce_2014_2019 <- exporta_csv(padroniza_dados(df_dados_limpos_2014_2019),
 # Prepara o conjunto de dados para imputacao
 df_crime_ce_2014_2019_missing <- prepara_dados_imputacao(df_crime_ce_2014_2019)
 
+# OU
+
 # Do Arquivo CSV
 # Importa data frame sem merge do CSV
 df_crime_ce_2014_2019_missing <- prepara_dados_imputacao(importa_csv("original",paste0(nome_arquivo,"_Original_Limpo",".csv")))
@@ -102,12 +104,12 @@ df_crime_ce_2014_2019_merges <- executa_merges(df_crime_ce_2014_2019_imputado)
 ##############################################################################################
 
 # Exporta data frames para CSV
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2019, 2019), "Crimes_Ceara_Limpo_Imputado_Merges_2019",".csv")
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2018, 2018), "Crimes_Ceara_Limpo_Imputado_Merges_2018",".csv")
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2017, 2017), "Crimes_Ceara_Limpo_Imputado_Merges_2017",".csv")
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2016, 2016), "Crimes_Ceara_Limpo_Imputado_Merges_2016",".csv")
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2015, 2015), "Crimes_Ceara_Limpo_Imputado_Merges_2015",".csv")
-exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2014, 2014), "Crimes_Ceara_Limpo_Imputado_Merges_2014",".csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2019, 2019), "Homicidios_Ceara_2019_Original_Limpo_Imputado_Merges.csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2018, 2018), "Homicidios_Ceara_2018_Original_Limpo_Imputado_Merges.csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2017, 2017), "Homicidios_Ceara_2017_Original_Limpo_Imputado_Merges.csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2016, 2016), "Homicidios_Ceara_2016_Original_Limpo_Imputado_Merges.csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2015, 2015), "Homicidios_Ceara_2015_Original_Limpo_Imputado_Merges.csv")
+exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2014, 2014), "Homicidios_Ceara_2014_Original_Limpo_Imputado_Merges.csv")
 
 ##############################################################################################
 ## IMPORTACAO

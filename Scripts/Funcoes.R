@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  19/12/2019
+# Atualizado:  08/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -22,13 +22,13 @@ extrai_lista_anos <- function(url_site) {
     na.omit(.) %>% # exclui missings
     .[-c(nrow(.)),] # remove ultima linha
   
-    # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
-    ####################################################################################################
-    ano_2019 <- matrix(data = c("box","https://www.sspds.ce.gov.br/estatisticas-2/"),ncol=2, byrow=TRUE)
-    colnames(ano_2019) <- c("class","href")
-    df_lista_urls <- rbind(ano_2019, df_lista_urls)
-    df_lista_urls$href <- as.character(df_lista_urls$href)
-    ####################################################################################################
+    # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+    # ####################################################################################################
+    # ano_2019 <- matrix(data = c("box","https://www.sspds.ce.gov.br/estatisticas-2/"),ncol=2, byrow=TRUE)
+    # colnames(ano_2019) <- c("class","href")
+    # df_lista_urls <- rbind(ano_2019, df_lista_urls)
+    # df_lista_urls$href <- as.character(df_lista_urls$href)
+    # ####################################################################################################
 
   df_lista_titulos <- pagina_html %>% #obtem codigo html da pagina
     rvest::html_nodes('.grid p') %>% # Filtro das tags "h3" (nomes dos meses de cada link)desejadas
@@ -40,12 +40,12 @@ extrai_lista_anos <- function(url_site) {
     as.data.frame(.) %>% # Converte a lista de titulos em data frame
     setNames(., "ano") # O "." significa trazer o data frame anterior e e atribui o nome "ano" da coluna do dataframe
 
-    # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
-    ####################################################################################################
-    ano_2019 <- matrix(data = c("2019"),ncol=1, byrow=TRUE)
-    colnames(ano_2019) <- c("ano")
-    df_lista_titulos <- rbind(ano_2019, df_lista_titulos)
-    ####################################################################################################
+    # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+    # ####################################################################################################
+    # ano_2019 <- matrix(data = c("2019"),ncol=1, byrow=TRUE)
+    # colnames(ano_2019) <- c("ano")
+    # df_lista_titulos <- rbind(ano_2019, df_lista_titulos)
+    # ####################################################################################################
     
   # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
   df_urls_anos <- data.frame(df_lista_urls, df_lista_titulos) 
@@ -301,7 +301,12 @@ padroniza_dados <- function(df_dados) {
   df_dados <- df_dados %>%
     mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Nao Informado", NA)) %>%
     mutate(SEXO = replace(SEXO, SEXO == "Nao Identificado", NA)) 
-
+  
+  # Atribui ID classificado por DATA
+  df_dados <- df_dados %>% 
+    arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
+    mutate(ID = c(1:nrow(.))) # Atualiza ID
+    
   return(df_dados)
 }
 
@@ -495,7 +500,9 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
 # Funcao para criar ID
 cria_id <- function(df_dados) {
   # Recria ID
-  df_dados <- df_dados %>% cbind(., ID = c(1:nrow(.))) %>% .[,-c(1)] %>% .[,c(10, 1:9)]
+  df_dados <- df_dados %>% 
+    cbind(., ID = c(1:nrow(.))) %>% 
+    .[,-c(1)] %>% .[,c(10, 1:9)]
   
   return(df_dados)
 }
@@ -555,15 +562,15 @@ realiza_limpeza_dados <- function() {
                                          dados_homicidio_ce_2017, 
                                          dados_homicidio_ce_2016, 
                                          dados_homicidio_ce_2015,
-                                         dados_homicidio_ce_2014) %>% adiciona_cabecalho(.) %>% cria_id(.)
+                                         dados_homicidio_ce_2014) %>% adiciona_cabecalho(.)
   
-  # Cria variaveis globais dos data frames
-  assign('dados_homicidio_ce_2019', cria_id( adiciona_cabecalho( dados_homicidio_ce_2019 ) ), envir=.GlobalEnv)
-  assign('dados_homicidio_ce_2018', cria_id( adiciona_cabecalho( dados_homicidio_ce_2018 ) ), envir=.GlobalEnv)
-  assign('dados_homicidio_ce_2017', cria_id( adiciona_cabecalho( dados_homicidio_ce_2017 ) ), envir=.GlobalEnv)
-  assign('dados_homicidio_ce_2016', cria_id( adiciona_cabecalho( dados_homicidio_ce_2016 ) ), envir=.GlobalEnv)
-  assign('dados_homicidio_ce_2015', cria_id( adiciona_cabecalho( dados_homicidio_ce_2015 ) ), envir=.GlobalEnv)
-  assign('dados_homicidio_ce_2014', cria_id( adiciona_cabecalho( dados_homicidio_ce_2014 ) ), envir=.GlobalEnv)
+  # # Cria variaveis globais dos data frames
+  # assign('dados_homicidio_ce_2019', adiciona_cabecalho( dados_homicidio_ce_2019 ), envir=.GlobalEnv)
+  # assign('dados_homicidio_ce_2018', adiciona_cabecalho( dados_homicidio_ce_2018 ), envir=.GlobalEnv)
+  # assign('dados_homicidio_ce_2017', adiciona_cabecalho( dados_homicidio_ce_2017 ), envir=.GlobalEnv)
+  # assign('dados_homicidio_ce_2016', adiciona_cabecalho( dados_homicidio_ce_2016 ), envir=.GlobalEnv)
+  # assign('dados_homicidio_ce_2015', adiciona_cabecalho( dados_homicidio_ce_2015 ), envir=.GlobalEnv)
+  # assign('dados_homicidio_ce_2014', adiciona_cabecalho( dados_homicidio_ce_2014 ), envir=.GlobalEnv)
   
   return(dados_homicidio_ce_merge_anos)
 }
@@ -908,9 +915,11 @@ executa_merges <- function(df_dados_imputado) {
 
 # Funcao para selecionar dataset por periodos de ano
 obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
+
+  df_dados_anual <- df_dados %>% filter(between(year(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")), ano_inicial, ano_final)) %>% 
+    arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
+    mutate(ID = c(1:nrow(.))) # Atualiza ID
   
-  df_dados <- df_dados %>% filter(between(year(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")), ano_inicial, ano_final))
-  
-  return(df_dados)
+  return(df_dados_anual)
 }
   
