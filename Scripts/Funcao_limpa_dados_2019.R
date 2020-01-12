@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        22/12/2019
-# Atualizado:  24/12/2019
+# Atualizado:  12/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 # Funcao de limpeza dos dados da matriz por documento baixado e retorna um data frame
@@ -384,42 +384,17 @@ limpa_dados_2019 <- function(ano, data_frame_meses) {
         print(paste("########## Extraindo tabelas de", nome, "contendo", length(m_tabelas), "pagina(s). ##########", sep = " "))
         total_pgs <- total_pgs + length(m_tabelas)
         
-        # # Excluir coluna excedente
-        # m_tabelas[[11]] <- m_tabelas[[11]][,-c(4)]
-        # m_tabelas[[14]] <- m_tabelas[[14]][,-c(4)]
-        
         # Une as tabelas extraídas 
         m_tabela <- do.call(rbind, m_tabelas)
         
         # Concatena valores fragmentados das colunas 2, 3, 4 e 7
         m_tabela <- concatena_variaveis_matriz(m_tabela)
         
-        # # Corrige variaveis com valores quebrados nas colunas 3 e 4
-        # m_tabela[436,4] <- m_tabela[436,3]
-        # m_tabela[436,3] <- paste(m_tabela[435,3], m_tabela[437,3], sep = " ")
-        # m_tabela[439,4] <- m_tabela[439,3]
-        # m_tabela[439,3] <- paste(m_tabela[438,3], m_tabela[440,3], sep = " ")
-        # 
-        # for (n_linha in 418:nrow(m_tabela)) {
-        #   if(n_linha == 423) {
-        #     NATUREZA_FATO <- substring(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-10, nchar(m_tabela[n_linha,3]))
-        #     m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3])-nchar(NATUREZA_FATO))
-        #     m_tabela[n_linha,4] <- NATUREZA_FATO
-        #   }
-        #   if(!(n_linha %in% c(423,435:441))) {
-        #     NATUREZA_FATO <- substring(m_tabela[n_linha,3], nchar(m_tabela[n_linha,3])-16, nchar(m_tabela[n_linha,3]))
-        #     m_tabela[n_linha,3] <- substr(m_tabela[n_linha,3], 0, nchar(m_tabela[n_linha,3])-nchar(NATUREZA_FATO))
-        #     m_tabela[n_linha,4] <- NATUREZA_FATO
-        #   }
-        # }
-        
         # Remove hifen,hifen-barra,vazio,F,M das colunas 3, 5, 8, 9 e 10
         m_tabela <- corrige_variaveis_matriz(m_tabela)
         
         # Exclui linhas desnecessarias 
         m_tabela <- exclui_linhas_matriz(m_tabela)
-        
-        # DF12 <- as.data.frame(m_tabela)
         
         # converte matriz em data frame e faz merge de linhas.
         df_tabela <- df_tabela %>% rbind(., as.data.frame(m_tabela))
@@ -428,11 +403,6 @@ limpa_dados_2019 <- function(ano, data_frame_meses) {
       } 
     }
   }
-  
-  # # Padroniza o formato da data
-  # df_tabela[,6] <- df_tabela[,6] %>% 
-  #   gsub("-Apr-", "/04/", .) %>% 
-  #   gsub("-May-", "/05/", .)
   
   # Padroniza valores da coluna 4, 5, 9 e 10  
   df_tabela <- df_tabela %>% mutate(V3 = as.character(V3),V4 = as.character(V4),V5 = as.character(V5),V9 = as.character(V9))

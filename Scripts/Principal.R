@@ -96,7 +96,7 @@ gera_grafico_comparacao_imputacao(df_crime_ce_2014_2019_missing, df_crime_ce_201
 ##############################################################################################
 ## MERGES
 ##############################################################################################
-# Adiciona novas variaveis ao Dataset
+# Adiciona novas variaveis ao conjunto de dados
 df_crime_ce_2014_2019_merges <- executa_merges(df_crime_ce_2014_2019_imputado)
 
 ##############################################################################################

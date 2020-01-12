@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  08/01/2020
+# Atualizado:  12/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -437,8 +437,8 @@ exclui_linhas_matriz <- function(m_tabela) {
 padroniza_colunas_inconsistentes <- function(df_tabela) {
   
   # Padroniza valores da coluna 5, 9 e 10  
-  tipo1 <- c("ARMA DE FOGO E ARMA", "Arma de fogo")
-  tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO")
+  tipo1 <- c("ARMA DE FOGO E ARMA")
+  tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO", "Arma de fogo")
   tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA", "Arma branca")
   tipo4 <- c("Outros meios","EOUTROS","OUTRO","ARMA OUTROS","Outro","OUTRO TIPO","AMA OUTROS")
   tipo5 <- c("Meio não informado","NÃO INFORMAD","NI")
