@@ -53,6 +53,7 @@ obtem_arquivos()
 ##############################################################################################
 # Executa a funcao de limpeza dos dados e obtem um data frame
 df_dados_limpos_2014_2019 <- realiza_limpeza_dados()
+exporta_csv(df_dados_limpos_2014_2019, paste0(nome_arquivo,"_Original",".csv")) 
 
 ##############################################################################################
 ## TRATAMENTO

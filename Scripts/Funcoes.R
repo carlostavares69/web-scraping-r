@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  12/01/2020
+# Atualizado:  15/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -22,14 +22,14 @@ extrai_lista_anos <- function(url_site) {
     na.omit(.) %>% # exclui missings
     .[-c(nrow(.)),] # remove ultima linha
   
-    # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
-    # ####################################################################################################
-    # ano_2019 <- matrix(data = c("box","https://www.sspds.ce.gov.br/estatisticas-2/"),ncol=2, byrow=TRUE)
-    # colnames(ano_2019) <- c("class","href")
-    # df_lista_urls <- rbind(ano_2019, df_lista_urls)
-    # df_lista_urls$href <- as.character(df_lista_urls$href)
-    # ####################################################################################################
-
+  # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+  # ####################################################################################################
+  # ano_2019 <- matrix(data = c("box","https://www.sspds.ce.gov.br/estatisticas-2/"),ncol=2, byrow=TRUE)
+  # colnames(ano_2019) <- c("class","href")
+  # df_lista_urls <- rbind(ano_2019, df_lista_urls)
+  # df_lista_urls$href <- as.character(df_lista_urls$href)
+  # ####################################################################################################
+  
   df_lista_titulos <- pagina_html %>% #obtem codigo html da pagina
     rvest::html_nodes('.grid p') %>% # Filtro das tags "h3" (nomes dos meses de cada link)desejadas
     rvest::html_text() %>% # Converte a relacao de nomes em texto
@@ -39,21 +39,21 @@ extrai_lista_anos <- function(url_site) {
     .[-length(.)] %>% # remove ano 2013
     as.data.frame(.) %>% # Converte a lista de titulos em data frame
     setNames(., "ano") # O "." significa trazer o data frame anterior e e atribui o nome "ano" da coluna do dataframe
-
-    # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
-    # ####################################################################################################
-    # ano_2019 <- matrix(data = c("2019"),ncol=1, byrow=TRUE)
-    # colnames(ano_2019) <- c("ano")
-    # df_lista_titulos <- rbind(ano_2019, df_lista_titulos)
-    # ####################################################################################################
-    
+  
+  # # Incluir ano 2019 antes do final do ano de 2018 (Linha de codigo - TEMPORÁRIO)
+  # ####################################################################################################
+  # ano_2019 <- matrix(data = c("2019"),ncol=1, byrow=TRUE)
+  # colnames(ano_2019) <- c("ano")
+  # df_lista_titulos <- rbind(ano_2019, df_lista_titulos)
+  # ####################################################################################################
+  
   # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
   df_urls_anos <- data.frame(df_lista_urls, df_lista_titulos) 
   
   excluir <- c("class", "target") # Lista de colunas a serem excluidos"
   df_urls_anos <- df_urls_anos[,!(names(df_urls_anos) %in% excluir)] # Excluir as colunas "class" e/ou "target" do data frame
   df_urls_anos[,1][df_urls_anos[, 1] == "#"] <- NA # substituii cerquilha,"#", em missing
-
+  
   return(df_urls_anos)
 }
 
@@ -75,7 +75,7 @@ extrai_lista_documentos <- function(url_pagina) {
     gsub(" ", "", .) %>% # Substitui espaco com travessao por travessao sem espaco
     as.data.frame(.) %>% # Converte a lista de titulos em data frame
     setNames(., "mes") # O "." significa trazer o data frame anterior e e atribui o nome "mes" da coluna do dataframe 
-    
+  
   
   # Juntar o data frame df_lista_urls e o data frame df_lista_titulos
   df_urls_nomes <- data.frame(df_lista_urls, df_lista_titulos) 
@@ -123,9 +123,9 @@ download_documentos <- function(d_frame_lista) {
             print(paste("Arquivo indisponivel: ", df_nome$mes, sep = " ")) # se existir dados missing print Arquivo indisponivel
           }
         }
-      
+        
       }
-    
+      
     }
     
   }
@@ -139,7 +139,7 @@ extrai_tabela <- function(caminho_completo_arquivo, areas_tabela) {
 # Funcao que baixa lista de arquivos por ano 
 obtem_arquivos <- function() {
   anos <- extrai_lista_anos(URL_site)
-
+  
   for(indice in 1:nrow(anos)) {
     print(paste("Lendo codigo HTML da pagina Web:", anos[indice,1], "-", anos[indice,2], sep = " "))
     # Executa a funcao que obtem um data frame com urls e nomes dos documentos
@@ -247,13 +247,13 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
   
   # Importanto CSV
   dados_csv <- readr::read_delim(file = nome_arquivo_csv, 
-                                delim = ";",
-                                na = "NA",
-                                col_names = TRUE,
-                                col_types = classes_colunas,
-                                #locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
-                                locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ",", grouping_mark = ".", date_format = "%d/%m/%Y"),
-                                progress = show_progress())
+                                 delim = ";",
+                                 na = "NA",
+                                 col_names = TRUE,
+                                 col_types = classes_colunas,
+                                 #locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
+                                 locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ",", grouping_mark = ".", date_format = "%d/%m/%Y"),
+                                 progress = show_progress())
   return(dados_csv)
 }
 
@@ -283,9 +283,10 @@ padroniza_dados <- function(df_dados) {
   vars_factor <- lapply(df_dados, class) == "factor"
   df_dados[, vars_factor] <- lapply(df_dados[, vars_factor], as.character) 
   
-  # Remove espacos em branco na esquerda/direita das variaveis/remove acentos
+  # Remove remove acentos e espacos em branco na esquerda/direita das variaveis
   df_dados <- df_dados %>% 
-    mutate(MUNICIPIO_HOMICIDIO =  remove_acentos(str_trim(MUNICIPIO_HOMICIDIO)), 
+    mutate(AIS = str_trim(AIS), 
+           MUNICIPIO_HOMICIDIO =  remove_acentos(str_trim(MUNICIPIO_HOMICIDIO)), 
            NATUREZA_HOMICIDIO = remove_acentos(str_trim(NATUREZA_HOMICIDIO)), 
            ARMA_UTILIZADA =  remove_acentos(str_trim(ARMA_UTILIZADA)), 
            DATA_HOMICIDIO = str_trim(DATA_HOMICIDIO), 
@@ -302,11 +303,15 @@ padroniza_dados <- function(df_dados) {
     mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Nao Informado", NA)) %>%
     mutate(SEXO = replace(SEXO, SEXO == "Nao Identificado", NA)) 
   
+  
+  # Organiza as observacoes da coluna 2 (AIS)
+  df_dados <- corrige_grupo_ais_municipios(df_dados)
+  
   # Atribui ID classificado por DATA
   df_dados <- df_dados %>% 
     arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
     mutate(ID = c(1:nrow(.))) # Atualiza ID
-    
+  
   return(df_dados)
 }
 
@@ -340,9 +345,9 @@ corrige_variavel <- function(num_col, tit_coluna, tb_matrix) {
 
 # Funcao que corrige variaveis fragmentadas na matriz
 concatena_variaveis_matriz <- function(m_tabela) {
-  # concatena valores fragmentados da coluna coluna 2
+  # concatena valores fragmentados da coluna coluna 2 (V2=AIS)
   coluna <- c(2)
-  linhas <- corrige_variavel(coluna, c("AIS"), m_tabela)
+  linhas <- corrige_variavel(coluna, c("V2"), m_tabela)
   if(!is.null(linhas)) {
     for (num in 1:length(linhas)) {
       var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
@@ -351,9 +356,9 @@ concatena_variaveis_matriz <- function(m_tabela) {
     }
   }
   
-  # concatena valores fragmentados da coluna coluna 3
+  # concatena valores fragmentados da coluna coluna 3 (V3=MUNICIPIO)
   coluna <- c(3)
-  linhas <- corrige_variavel(coluna, c("MUNICÍPIO"), m_tabela)
+  linhas <- corrige_variavel(coluna, c("V3"), m_tabela)
   if(!is.null(linhas)) {
     for (num in 1:length(linhas)) {
       var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
@@ -362,9 +367,9 @@ concatena_variaveis_matriz <- function(m_tabela) {
     }
   }
   
-  # concatena valores fragmentados da coluna coluna 4
+  # concatena valores fragmentados da coluna coluna 4 (V4=NATUREZA_DO_FATO)
   coluna <- c(4)
-  linhas <- corrige_variavel(coluna, c("NATUREZA DO FATO"), m_tabela)
+  linhas <- corrige_variavel(coluna, c("V4"), m_tabela)
   if(!is.null(linhas)) {
     for (num in 1:length(linhas)) {
       var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
@@ -373,9 +378,9 @@ concatena_variaveis_matriz <- function(m_tabela) {
     }
   }
   
-  # concatena valores fragmentados da coluna coluna 7
+  # concatena valores fragmentados da coluna coluna 7 (V7=NOME_DA_VITIMA)
   coluna <- c(7)
-  linhas <- corrige_variavel(coluna, c("NOME DA VÍTIMA"), m_tabela)
+  linhas <- corrige_variavel(coluna, c("V7"), m_tabela)
   if(!is.null(linhas)) {
     for (num in 1:length(linhas)) {
       var_correcao <- paste(m_tabela[linhas[num]-1, coluna], m_tabela[linhas[num]+1, coluna], sep = " ")
@@ -436,6 +441,70 @@ exclui_linhas_matriz <- function(m_tabela) {
 # Funcao que padroniza valores inconsistentes de colunas
 padroniza_colunas_inconsistentes <- function(df_tabela) {
   
+  #unique(df_dados_limpos_2014_2019$AIS)
+  
+  #df_tabela <- df_dados_limpos_2014_2019
+  
+  #unique(df_tabela$V2)
+  
+  # Padroniza valores da coluna 2 
+  aisUP <- c("UNIDADE PRISIONAL", "Unidade Prisional", "UNIDADE PRISONAL", "39PRISIONA", "34PRISIONA", "UNIDADE JUAZEIRO DO PRISIONAL NORTE",
+             "dade 193 40Prisional", "dade 139 31PrisionalMULUNGU", "dade 217 36Prisional", "GONÇALO DO 233 21Prisional Unidade",
+             "dade 140 26PrisionalMULUNGU") 
+  aisNA <- c("AIS NÃO DEFINIDA", "99", "Acidente de Trânsito","")
+  ais1 <- c("AIS 1 F", "AO CORPORAL 358 AIS 1", "AIS 1 FORTALEZA")
+  ais2 <- c("AIS 2 F")
+  #ais3 <- c()
+  ais4 <- c("AIS 4 F", "BO SEGUIDO DE 230 AIS 4")
+  ais5 <- c("AIS 5 F", "BO SEGUIDO DE 154 AIS 5")
+  ais6 <- c("AIS 6 F", "AO CORPORAL 161 AIS 6")
+  ais7 <- c("AIS 7 C", "GONÇALO DO 194 AIS 7", "GONÇALO DO 241 AIS 7")
+  #ais8 <- c()
+  ais9 <- c("AIS 9 C", "AIS 9 H", "AIS 9 E")
+  ais10 <- c("A 303 AIS 10", "ULEIRO DO 300 AIS 10")
+  
+  # [25] NA                                                                                       
+  # [28] ""                                                                      
+  # [31]                                                       "AIS 9 "                             
+  # [34] "AIS 7 "                              "AIS 4 "                              "AIS 5 "                             
+  # [37]  " AIS 16"                             " AIS 3"                             
+  # [40] " AIS 11"                             " AIS 15"                             "AZEIRO DO 15 AIS 11"                
+  # [43] " AIS 10"                             " AIS 1"                              " AIS 13"                            
+  # [46] " AIS 2"                              " AIS 8"                              " AIS 17"                            
+  # [49] " AIS 12"                             " AIS 9"                              "UBO SEGUIDO DE 31 AIS 17"           
+  # [52] " AIS 4"                              "UBO SEGUIDO DE 40 AIS 11"            " AIS 5"                             
+  # [55] "AZEIRO DO 45 AIS 11"                 "AZEIRO DO 46 AIS 11"                 " AIS 17 "                           
+  # [58] " AIS 10 "                            "AZEIRO D"                                                       
+  # [61] " AIS 16 "                            " AIS 12 "                                                       
+  # [64]                                                                                             
+  # [67]                                                                   " AIS 18"                            
+  # [70] "UBO SEGUIDO DE 99 AIS 12"            " AIS 14"                             " AIS 7"                             
+  # [73] "ZEIRO DO 112 AIS 11"                "ZEIRO DO 122 AIS 11"                 "ZEIRO DO 123 AIS 11"                
+  # [76] "ZEIRO DO 133 AIS 11"                                             
+  # [79]                                      " AIS 13 "                              "OEIRO DO"                           
+  # [82] " AIS 15 "                                                                                   
+  # [85] " AIS 11 "                                                                 "BO SEGUIDO DE 155 AIS 15"           
+  # [88]                "OCA DE 191 AIS 17"                                  
+  # [91]                "BO SEGUIDO DE 212 AIS 12"                           
+  # [94]                             
+  # [97]                                         "ZEIRO DO 308 AIS 11"                
+  # [100] " AIS 6"                              "ZEIRO DO 351 AIS 11"                               
+  # [103] "ZEIRO DO 373 AIS 11"                 "TANA DO 375 AIS 12"
+  
+  # Padroniza valores da coluna 2
+  df_tabela <- df_tabela %>%
+    mutate(V2 = str_trim(V2)) %>% 
+    mutate(V2 = replace(V2, V2 %in% aisUP, "Unidade Prisional")) %>%  
+    mutate(V2 = replace(V2, V2 %in% ais1, "Ais 1")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais2, "Ais 2")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais4, "Ais 4")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais5, "Ais 5")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais6, "Ais 6")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais7, "Ais 7")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais9, "Ais 9")) %>% 
+    mutate(V2 = replace(V2, V2 %in% ais10, "Ais 10")) %>% 
+    mutate(V2 = replace(V2, V2 %in% aisNA, NA)) 
+  
   # Padroniza valores da coluna 5, 9 e 10  
   tipo1 <- c("ARMA DE FOGO E ARMA")
   tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO", "Arma de fogo")
@@ -448,7 +517,7 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
   tipo9 <- c("F")
   tipo10 <- c("","-")
   tipo11 <- c("LATROCINIO","LATROCÍNIO")
-  
+
   for (n_linha in 1:nrow(df_tabela)) {
     # Padroniza valores da coluna 4
     if(!is.na(df_tabela[n_linha,4])) {
@@ -493,7 +562,7 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
       if(df_tabela[n_linha,10] %in% tipo10) { df_tabela[n_linha,10] <- NA }
     }
   } 
-
+  
   return(df_tabela)
 }
 
@@ -527,33 +596,33 @@ realiza_limpeza_dados <- function() {
   # Obtem data frames por ano com dados limpos
   if(2019 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[1, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[1, 1])
-    dados_homicidio_ce_2019 <- limpa_dados_2019(lista_anos[1, 2], df_lista_meses)  
+    data_frame_meses <- extrai_lista_documentos(lista_anos[1, 1])
+    dados_homicidio_ce_2019 <- limpa_dados_2019(lista_anos[1, 2], data_frame_meses)  
   }
   if(2018 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[2, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[2, 1])
-    dados_homicidio_ce_2018 <- limpa_dados_2018(lista_anos[2, 2], df_lista_meses)  
+    data_frame_meses <- extrai_lista_documentos(lista_anos[2, 1])
+    dados_homicidio_ce_2018 <- limpa_dados_2018(lista_anos[2, 2], data_frame_meses)  
   }
   if(2017 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[3, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[3, 1])
-    dados_homicidio_ce_2017 <- limpa_dados_2017(lista_anos[3, 2], df_lista_meses) 
+    data_frame_meses <- extrai_lista_documentos(lista_anos[3, 1])
+    dados_homicidio_ce_2017 <- limpa_dados_2017(lista_anos[3, 2], data_frame_meses) 
   }
   if(2016 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[4, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[4, 1])
-    dados_homicidio_ce_2016 <- limpa_dados_2016(lista_anos[4, 2], df_lista_meses) 
+    data_frame_meses <- extrai_lista_documentos(lista_anos[4, 1])
+    dados_homicidio_ce_2016 <- limpa_dados_2016(lista_anos[4, 2], data_frame_meses) 
   }
   if(2015 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[5, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[5, 1])
-    dados_homicidio_ce_2015 <- limpa_dados_2015(lista_anos[5, 2], df_lista_meses) 
+    data_frame_meses <- extrai_lista_documentos(lista_anos[5, 1])
+    dados_homicidio_ce_2015 <- limpa_dados_2015(lista_anos[5, 2], data_frame_meses) 
   }
   if(2014 %in% vetor_anos) {
     print(paste("Limpando dados de", lista_anos[6, 2], sep = " "))
-    df_lista_meses <- extrai_lista_documentos(lista_anos[6, 1])
-    dados_homicidio_ce_2014 <- limpa_dados_2014(lista_anos[6, 2], df_lista_meses) 
+    data_frame_meses <- extrai_lista_documentos(lista_anos[6, 1])
+    dados_homicidio_ce_2014 <- limpa_dados_2014(lista_anos[6, 2], data_frame_meses) 
   }
   
   # Merge dos data frames, inclusao de cabecalho e reconstrucao da variavel ID
@@ -594,7 +663,7 @@ merge_dados_geo <- function(df_dados) {
     # Cria variavel global
     assign('dados_shp', dados_shp, envir=.GlobalEnv)
   }
-
+  
   # Filtro por municipios do Ceara
   df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
     as.data.frame(.) %>% 
@@ -603,13 +672,13 @@ merge_dados_geo <- function(df_dados) {
     rename(LONGITUDE = LONG) %>% 
     mutate(LATITUDE = format(LATITUDE, trim = TRUE, digits = 7), LONGITUDE = format(LONGITUDE, trim = TRUE, digits = 7), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
     mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
-
+  
   # Converte variavel para maiusculo e remove acentuacao
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
   # Verifica inconsistencia entre as colunas de merge
   inconsistencias <- verifica_inconsistencias(df_dados$MUNICIPIO_HOMICIDIO, df_geo$NM_MUNICIP)
-
+  
   # Substitui valores das variaveis 
   df_dados <- df_dados %>%
     mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "ITAPAJE", "ITAPAGE")) %>%
@@ -665,7 +734,7 @@ merge_grupo_arma_fogo <- function(df_dados) {
   # Cria nova variavel com teste de Bernoulli para o tipo de Arma De Fogo
   df_dados <- df_dados %>% 
     mutate(ARMA_DE_FOGO = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Sim", ARMA_UTILIZADA != "Arma De Fogo" ~ "Nao")) 
-    # %>% arrange(desc(ARMA_DE_FOGO))
+  # %>% arrange(desc(ARMA_DE_FOGO))
   return(df_dados)
 }
 
@@ -688,13 +757,13 @@ merge_grupo_natureza_homicidio <- function(df_dados){
 # 
 #   return(df_dados)
 # }
-  
+
 # Funcao para criar variavel mes/ano
 merge_variavel_mesano <- function(df_dados) {
   
   # Cria variavel mes/ano
   df_var_mesano <- df_dados %>% 
-  mutate(MES_ANO = format.Date(as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y"), "%m/%Y")) 
+    mutate(MES_ANO = format.Date(as.Date(DATA_HOMICIDIO, format = "%d/%m/%Y"), "%m/%Y")) 
   
   return(df_var_mesano)
 }
@@ -770,7 +839,7 @@ merge_dados_pib <- function(df_dados) {
     rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
     mutate(PIB_PERCAPITA = as.numeric(PIB_PERCAPITA)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-
+  
   # Converte variavel para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
@@ -797,7 +866,7 @@ merge_dados_pib <- function(df_dados) {
 
 # Funcao para criar variavel incidencia de homicidio
 merge_variavel_incidencia_homicidio <- function(df_dados) {
-
+  
   # Converte para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
@@ -818,7 +887,7 @@ merge_variavel_incidencia_homicidio <- function(df_dados) {
   return(df_merge)
 }
 
-# Funcao para criar variavel incidencia de homicidio por 100 mil
+# Funcao para criar variavel incidencia de homicidio por 100 mil de habitantes
 merge_var_incidencia_homicidio_porcemmil <- function(df_dados) {
   # obtem o calculo do numero de incidencia por cem mil
   df_var_incidencia_cemmil <- df_dados %>%
@@ -852,7 +921,7 @@ merge_dados_incidencia_homicidio_poranosexo <- function(df_dados) {
     #arrange(SEXO) %>%
     mutate(INCID_HOMI_POR_ANOSEXO = n()) %>% 
     select(-ano) 
-    #.[,-c(ncol(.)-1)]
+  #.[,-c(ncol(.)-1)]
   
   return(df_incidencia_homicidio_anosexo)
 }
@@ -867,7 +936,7 @@ merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
     arrange(ano, SEXO, MUNICIPIO_HOMICIDIO) %>%
     mutate(INCID_HOMI_POR_ANOSEXOMUNICIPIO = n()) %>% 
     select(-ano) 
-    #.[,-c(ncol(.)-1)]
+  #.[,-c(ncol(.)-1)]
   
   return(df_incidencia_homicidio_anosexomunicipio)
 }
@@ -888,6 +957,9 @@ executa_merges <- function(df_dados_imputado) {
   
   # GRUPO_MUNICIPIO
   df_dados_merges <- merge_grupo_municipios(df_dados_merges)
+  
+  # GRUPO_AIS
+  df_dados_merges <- merge_grupo_ais(df_dados_merges)
   
   # ARMA_DE_FOGO
   df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
@@ -915,11 +987,86 @@ executa_merges <- function(df_dados_imputado) {
 
 # Funcao para selecionar dataset por periodos de ano
 obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
-
+  
   df_dados_anual <- df_dados %>% filter(between(year(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")), ano_inicial, ano_final)) %>% 
     arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
     mutate(ID = c(1:nrow(.))) # Atualiza ID
   
   return(df_dados_anual)
 }
+
+
+# Funcao para merge areas integradas
+corrige_grupo_ais_municipios <- function(df_dados) {
+
+  # Faixas de AIS
+  # Fonte: https://www.sspds.ce.gov.br/ais/
   
+  Ais_fortaleza <- c("Ais 1","Ais 2","Ais 3","Ais 4","Ais 5","Ais 6","Ais 7","Ais 8","Ais 9","Ais 10")
+  Ais_11 <- c("Caucaia", "Paracuru", "Paraipaba", "Sao Goncalo Do Amarante", "Sao Luis Do Curu", "Trairi")
+  Ais_12 <- c("Guaiuba", "Itaitinga", "Maracanau", "Maranguape", "Pacatuba")
+  Ais_13 <- c("Aquiraz", "Cascavel", "Chorozinho", "Eusebio", "Horizonte", "Pacajus", "Pindoretama")
+  Ais_14 <- c("Alcantaras", "Barroquinha", "Camocim", "Carire", "Carnaubal", "Chaval", "Coreau", "Croata", "Forquilha", "Frecheirinha", "Graca", 
+              "Granja", "Groairas", "Guaraciaba Do Norte", "Ibiapina", "Martinopole", "Massape", "Meruoca", "Moraujo", "Mucambo", "Pacuja", 
+              "Santana Do Acarau", "Sao Benedito", "Senador Sa", "Sobral", "Tiangua", "Ubajara", "Uruoca", "Vicosa Do Ceara")
+  Ais_15 <- c("Acarape", "Aracoiaba", "Aratuba", "Barreira", "Baturite", "Boa Viagem", "Caninde", "Capistrano", "Caridade", "Guaramiranga", 
+              "Itapiuna", "Itatira", "Madalena", "Mulungu", "Ocara", "Pacoti", "Palmacia", "Paramoti", "Redencao")
+  Ais_16 <- c("Ararenda", "Catunda", "Crateus", "Hidrolandia", "Independencia", "Ipaporanga", "Ipu", "Ipueiras", "Monsenhor Tabosa", 
+              "Nova Russas", "Novo Oriente", "Pires Ferreira", "Poranga", "Reriutaba", "Santa Quiteria", "Tamboril", "Varjota")
+  Ais_17 <- c("Acarau", "Amontada", "Apuiares", "Bela Cruz", "Cruz", "General Sampaio", "Iraucuba", "Itapaje", "Itapipoca", "Itarema", 
+              "Jijoca De Jericoacoara", "Marco", "Miraima", "Morrinhos", "Pentecoste", "Tejucuoca", "Tururu", "Umirim", "Uruburetama")
+  Ais_18 <- c("Alto Santo", "Aracati", "Beberibe", "Erere", "Fortim", "Icapui", "Iracema", "Itaicaba", "Jaguaribe", "Jaguaruana", "Limoeiro Do Norte", 
+              "Nova Jaguaribara", "Palhano", "Pereiro", "Potiretama", "Quixere", "Russas", "Sao Joao Do Jaguaribe", "Tabuleiro Do Norte")
+  Ais_19 <- c("Abaiara", "Altaneira", "Antonina Do Norte", "Araripe", "Assare", "Aurora", "Barbalha", "Barro", "Brejo Santo", "Campos Sales", 
+              "Caririacu", "Crato", "Farias Brito", "Jardim", "Jati", "Juazeiro Do Norte", "Mauriti", "Milagres", "Missao Velha", "Nova Olinda", 
+              "Penaforte", "Porteiras", "Potengi", "Salitre", "Santana Do Cariri")
+  Ais_20 <- c("Banabuiu", "Choro", "Dep. Irapuan Pinheiro", "Ibaretama", "Ibicuitinga", "Jaguaretama", "Milha", "Morada Nova", "Pedra Branca", 
+              "Quixada", "Quixeramobim", "Senador Pompeu", "Solonopole")
+  Ais_21 <- c("Acopiara", "Baixio", "Carius", "Cedro", "Granjeiro", "Ico", "Iguatu", "Ipaumirim", "Jucas", "Lavras Da Mangabeira", "Oros", 
+              "Quixelo", "Saboeiro", "Tarrafas", "Umari", "Varzea Alegre")
+  Ais_22 <- c("Aiuaba", "Arneiroz", "Catarina", "Mombaca", "Parambu", "Piquet Carneiro", "Quiterianopolis", "Taua")
+  
+  # Atualiza variavel AIS
+  dados_ais <- df_dados %>%
+    # Remove acentos
+    mutate(MUNICIPIO_HOMICIDIO = remove_acentos(str_trim(MUNICIPIO_HOMICIDIO))) %>%  
+    mutate(MUNICIPIO_HOMICIDIO = str_to_title(MUNICIPIO_HOMICIDIO, locale = "pt_BR")) %>%  
+    # Resolve inconsistencias
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "Itapage", "Itapaje")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "Jaguaribara", "Nova Jaguaribara")) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == "Deputado Irapuan Pinheiro", "Dep. Irapuan Pinheiro")) %>%
+    # Corrige variavel AIS
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_11 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 11")) %>%  
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_12 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 12")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_13 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 13")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_14 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 14")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_15 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 15")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_16 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 16")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_17 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 17")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_18 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 18")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_19 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 19")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_20 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 20")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_21 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 21")) %>% 
+    mutate(AIS = replace(AIS, (MUNICIPIO_HOMICIDIO %in% Ais_22 & AIS != "Unidade Prisional" | is.na(AIS) & MUNICIPIO_HOMICIDIO != "Fortaleza"), "Ais 22")) %>%
+    mutate(AIS = replace(AIS, is.na(AIS), sample(Ais_fortaleza, 1)))
+
+  return(dados_ais)
+}
+
+# Funcao para merge do grupo de AIS
+merge_grupo_ais <- function(df_dados) {
+  
+  capital <- c("Ais 1","Ais 2","Ais 3","Ais 4","Ais 5","Ais 6","Ais 7","Ais 8","Ais 9","Ais 10")
+  rmf <- c("Ais 11","Ais 12","Ais 13")
+  interior_norte <- c("Ais 14","Ais 15","Ais 16","Ais 17")
+  interior_sul <- c("Ais 18","Ais 19","Ais 20","Ais 21","Ais 22")
+  
+  # Cria nova variavel com grupo de municipios
+  df_dados_ais <- df_dados %>%
+    mutate(GRUPO_AIS = case_when(AIS %in% capital ~ "Capital", 
+                                 AIS %in% rmf_fortaleza ~ "Regiao Metropolitana", 
+                                 AIS %in% interior_norte ~ "Interior Norte", 
+                                 AIS %in% interior_sul ~ "Interior Sul",
+                                 AIS == "Unidade Prisional" ~ paste0("Unidade Prisional"," de ",MUNICIPIO_HOMICIDIO)))
+  return(df_dados_ais)
+}

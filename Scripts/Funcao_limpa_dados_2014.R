@@ -11,10 +11,14 @@
 # Funcao de limpeza dos dados da matriz por documento baixado e retorna um data frame
 limpa_dados_2014 <- function(ano, data_frame_meses) {
   
+  # ano <- "2014"
+  
   print(paste("Definindo estrutura de limpeza para", nrow(data_frame_meses[2]), "meses.", sep = " "))
   
   df_nome_docs <- rbind(data_frame_meses[2])
   total_pgs <- 0
+  
+  #ano <- 2014
 
   for (num_doc in 1:nrow(df_nome_docs)) {
     nome <- as.character(data_frame_meses[num_doc,][2]$mes)
@@ -591,8 +595,8 @@ limpa_dados_2014 <- function(ano, data_frame_meses) {
     gsub("-nov-", "/11/", .) %>% 
     gsub("-dez-", "/12/", .)
   
-  # Padroniza valores da coluna 4, 5, 9 e 10  
-  df_tabela <- df_tabela %>% mutate(V3 = as.character(V3),V4 = as.character(V4),V5 = as.character(V5),V9 = as.character(V9))
+  # Padroniza valores da coluna 2, 4, 5, 9 e 10  
+  df_tabela <- df_tabela %>% mutate(V2 = as.character(V2),V3 = as.character(V3), V4 = as.character(V4), V5 = as.character(V5), V9 = as.character(V9))
   df_tabela <- padroniza_colunas_inconsistentes(df_tabela)
 
   print(paste("Finalizado", total_pgs, "pagina(s).", sep = " ")) 
