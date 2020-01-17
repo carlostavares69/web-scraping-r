@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  15/01/2020
+# Atualizado:  16/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -211,8 +211,8 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       MES_ANO = col_character(),
       FAIXA_ETARIA = col_character(),
       GRUPO_MUNICIPIO = col_character(),
+      GRUPO_AIS = col_character(),
       ARMA_DE_FOGO = col_character(),
-      GRUPO_ARMA_UTILIZADA = col_character(),
       POPULACAO = col_number(),
       IDHM = col_number(),
       PIB_PERCAPITA = col_number(),
@@ -222,7 +222,7 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
   } else if(status_classes == "personalizado") {
     classes_colunas <- cols(
       ID = col_number(), 
-      #AIS = col_character(), 
+      AIS = col_character(), 
       MUNICIPIO_HOMICIDIO = col_character(), 
       NATUREZA_HOMICIDIO = col_character(), 
       ARMA_UTILIZADA = col_character(), 
@@ -235,8 +235,8 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       MES_ANO = col_character(),
       FAIXA_ETARIA = col_character(),
       GRUPO_MUNICIPIO = col_character(),
+      GRUPO_AIS = col_character(),
       ARMA_DE_FOGO = col_character(),
-      GRUPO_ARMA_UTILIZADA = col_character(),
       POPULACAO = col_number(),
       IDHM = col_number(),
       PIB_PERCAPITA = col_number(),
@@ -655,7 +655,7 @@ verifica_inconsistencias <- function(df_col1, df_col2) {
   return(inconsistencias)
 }
 
-# Funcao para geocodificar conjunto de dados
+# Funcao para geocodificar conjunto de dados por municipio do Ceara
 merge_dados_geo <- function(df_dados) {
   # Importando o arquivo Shapefile (Fonte IBGE) com informacoes geograficas e coordenadas GPS
   if(!exists("dados_shp")) {
@@ -748,15 +748,6 @@ merge_grupo_natureza_homicidio <- function(df_dados){
     )
   return(df_dados)
 }
-
-# # Funcao para merge do tipo de arma utilizada
-# merge_grupo_arma_utilizada <- function(df_dados) {
-#   # Cria nova variavel para grupo de arma utilizada
-#   df_dados <- df_dados %>%
-#     mutate('GRUPO_ARMA_UTILIZADA' = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Arma de Fogo", ARMA_UTILIZADA != "Arma De Fogo" ~ "Outros"))
-# 
-#   return(df_dados)
-# }
 
 # Funcao para criar variavel mes/ano
 merge_variavel_mesano <- function(df_dados) {
@@ -864,7 +855,7 @@ merge_dados_pib <- function(df_dados) {
   return(df_merge)
 }
 
-# Funcao para criar variavel incidencia de homicidio
+# Funcao para criar variavel incidencia de homicidio por municipio
 merge_variavel_incidencia_homicidio <- function(df_dados) {
   
   # Converte para maiusculo
@@ -876,6 +867,7 @@ merge_variavel_incidencia_homicidio <- function(df_dados) {
     summarise(INCIDENCIA_HOMICIDIO = n()) %>%
     distinct()
   
+  # faz merge com o data frame origem df_dados
   df_merge <- merge(df_dados, df_incidencia, by.x=c('MUNICIPIO_HOMICIDIO'), by.y=c('MUNICIPIO_HOMICIDIO'))
   
   # Restaura formato da coluna MUNICIPIO_HOMICIDIO e restaura formato da variavel
@@ -941,8 +933,8 @@ merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
   return(df_incidencia_homicidio_anosexomunicipio)
 }
 
-# Funcao que faz os merges no data frame limpo
-executa_merges <- function(df_dados_imputado) {
+# Funcao que faz os merges no data frame com municipios
+df_municipios_executa_merges <- function(df_dados_imputado) {
   # INCIDENCIA_HOMICIDIO
   df_dados_merges <- merge_variavel_incidencia_homicidio(df_dados_imputado)
   
@@ -964,9 +956,6 @@ executa_merges <- function(df_dados_imputado) {
   # ARMA_DE_FOGO
   df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
   
-  # GRUPO_ARMA_UTILIZADA
-  #df_dados_merges <- merge_grupo_arma_utilizada(df_dados_merges)
-  
   # POPULACAO
   df_dados_merges <- merge_dados_populacao(df_dados_merges)
   
@@ -985,6 +974,46 @@ executa_merges <- function(df_dados_imputado) {
   return(df_dados_merges)
 }
 
+# Funcao que faz os merges no data frame com bairros
+df_bairros_executa_merges <- function(df_dados_imputado) {
+  
+  # LATITUDE/LONGITUDE
+  df_dados_merges <- merge_dados_bairro_geo(df_dados_imputado)  
+  
+  # INCIDENCIA_HOMICIDIO
+  df_dados_merges <- merge_dados_incidencia_homicidio_bairro(df_dados_merges)
+
+  # MES_ANO
+  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
+
+  # FAIXA_ETARIA
+  df_dados_merges <- merge_grupo_idades(df_dados_merges)
+
+  # GRUPO_NATUREZA_HOMICIDIO
+  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
+
+  # ARMA_DE_FOGO
+  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
+  
+  # POPULACAO
+  #df_dados_merges <- merge_dados_populacao(df_dados_merges)
+  
+  # IDHM
+  #df_dados_merges <- merge_dados_idhm(df_dados_merges)
+  
+  # PIB_PERCAPITA
+  #df_dados_merges <- merge_dados_pib(df_dados_merges)
+
+  # reordena titulos do cabecalho
+  df_dados_merges <- df_dados_merges %>%
+    .[,c(1:10, 14:ncol(.), 11:13)] 
+  
+  print("Realizando exportacao para arquivo CSV:")
+  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges_Bairros",".csv"))
+  
+  return(df_dados_merges)
+}
+
 # Funcao para selecionar dataset por periodos de ano
 obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
   
@@ -998,11 +1027,12 @@ obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
 
 # Funcao para merge areas integradas
 corrige_grupo_ais_municipios <- function(df_dados) {
-
   # Faixas de AIS
   # Fonte: https://www.sspds.ce.gov.br/ais/
   
-  Ais_fortaleza <- c("Ais 1","Ais 2","Ais 3","Ais 4","Ais 5","Ais 6","Ais 7","Ais 8","Ais 9","Ais 10")
+  # Cria vetor com nomes das ais
+  Ais_fortaleza <- c(paste0("Ais ", 1:10))
+  
   Ais_11 <- c("Caucaia", "Paracuru", "Paraipaba", "Sao Goncalo Do Amarante", "Sao Luis Do Curu", "Trairi")
   Ais_12 <- c("Guaiuba", "Itaitinga", "Maracanau", "Maranguape", "Pacatuba")
   Ais_13 <- c("Aquiraz", "Cascavel", "Chorozinho", "Eusebio", "Horizonte", "Pacajus", "Pindoretama")
@@ -1070,3 +1100,141 @@ merge_grupo_ais <- function(df_dados) {
                                  AIS == "Unidade Prisional" ~ paste0("Unidade Prisional"," de ",MUNICIPIO_HOMICIDIO)))
   return(df_dados_ais)
 }
+
+#--------------
+
+# Funcao para geocodificar conjunto de dados por bairro de Fortaleza
+merge_dados_bairro_geo <- function(df_dados) {
+  # Faixas de AIS
+  # Fonte: https://www.sspds.ce.gov.br/ais/
+  # OBS: Não incluso o Bairro Olavo Oliveira (Latitude IBGE: -3.7298802 Longitude IBGE: -38.589347)
+  
+  # Bairros_Ais1 <- c("Aldeota", "Cais do Porto", "Meireles", "Mucuripe", "Praia de Iracema", "Varjota", "Vicente Pinzon")
+  # Bairros_Ais2 <- c("Bom Jardim", "Conjunto Ceará I", "Conjunto Ceará II", "Genibaú", "Granja Lisboa", "Granja Portugal", "Siqueira")
+  # Bairros_Ais3 <- c("Ancuri", "Barroso", "Coaçu", "Conjunto Palmeiras", "Curió", "Guajeru", "Jangurussu", "Lagoa Redonda", "Messejana", "Parque Santa Maria", "Paupina", "Pedras", "São Bento")
+  # Bairros_Ais4 <- c("Álvaro Weyne", "Carlito Pamplona", "Centro", "Farias Brito", "Jacarecanga", "Monte Castelo", "Moura Brasil", "São Gerardo", "Vila Ellery")
+  # Bairros_Ais5 <- c("Aeroporto", "Benfica", "Bom Futuro", "Couto Fernandes", "Damas", "Demócrito Rocha", "Dendê", "Fátima", "Itaoca", "Itaperi", "Jardim América", "José Bonifácio", "Montese", "Pan Americano", "Parangaba", "Parreão", "Serrinha", "Vila Pery", "Vila União")
+  # Bairros_Ais6 <- c("Amadeu Furtado", "Antônio Bezerra", "Autran Nunes", "Bela Vista", "Bonsucesso", "Dom Lustosa", "Henrique Jorge", "João XXIII", "Jóquei Clube", "Padre Andrade", "Parque Araxá", "Parquelândia", "Pici", "Presidente Kennedy", "Quintino Cunha", "Rodolfo Teófilo")
+  # Bairros_Ais7 <- c("Aerolândia", "Alto da Balança", "Boa Vista", "Cajazeiras", "Cambeba", "Cidade dos Funcionários", "Dias Macedo", "Edson Queiroz", "Jardim das Oliveiras", "José de Alencar", "Parque Dois Irmãos", "Parque Iracema", "Parque Manibura", "Passaré", "Sabiaguaba", "Sapiranga")
+  # Bairros_Ais8 <- c("Barra do Ceará", "Cristo Redentor", "Floresta", "Jardim Guanabara", "Jardim Iracema", "Pirambu", "Vila Velha")
+  # Bairros_Ais9 <- c("Canindezinho", "Conjunto Esperança", "Conjunto José Walter", "Jardim Cearense", "Maraponga", "Mondubim", "Parque Santa Rosa", "Parque São José", "Planalto Ayrton Senna", "Parque Presidente Vargas", "Vila Manuel Sátiro")
+  # Bairros_Ais10 <- c("Cidade 2000", "Cocó", "Dionísio Torres", "Engenheiro Luciano Cavalcante", "Guararapes", "Joaquim Távora", "De Lourdes", "Manuel Dias Branco", "Papicu", "Praia do Futuro I", "Praia do Futuro II", "Salinas", "São João do Tauape")
+  
+  # Bairros_Ais1 <- c("Aldeota", "Cais do Porto", "Meireles", "Mucuripe", "Praia de Iracema", "Varjota", "Vicente Pinzon")
+  # Bairros_Ais2 <- c("Bom Jardim", "Conjunto Ceará I", "Conjunto Ceará II", "Genibaú", "Granja Lisboa", "Granja Portugal", "Siqueira")
+  # Bairros_Ais3 <- c("Ancuri", "Barroso", "Coaçu", "Conjunto Palmeiras", "Curió", "Guajeru", "Jangurussu", "Lagoa Redonda", "Messejana", "Parque Santa Maria", "Paupina", "Pedras", "São Bento")
+  # Bairros_Ais4 <- c("Álvaro Weyne", "Carlito Pamplona", "Centro", "Farias Brito", "Jacarecanga", "Monte Castelo", "Moura Brasil", "São Gerardo", "Vila Ellery")
+  # Bairros_Ais5 <- c("Aeroporto", "Benfica", "Bom Futuro", "Couto Fernandes", "Damas", "Demócrito Rocha", "Dendê", "Fátima", "Itaoca", "Itaperi", "Jardim América", "José Bonifácio", "Montese", "Pan Americano", "Parangaba", "Parreão", "Serrinha", "Vila Pery", "Vila União")
+  # Bairros_Ais6 <- c("Amadeu Furtado", "Antônio Bezerra", "Autran Nunes", "Bela Vista", "Bonsucesso", "Dom Lustosa", "Henrique Jorge", "João XXIII", "Jóquei Clube", "Padre Andrade", "Parque Araxá", "Parquelândia", "Pici", "Presidente Kennedy", "Quintino Cunha", "Rodolfo Teófilo")
+  # Bairros_Ais7 <- c("Aerolândia", "Alto da Balança", "Boa Vista", "Cajazeiras", "Cambeba", "Cidade dos Funcionários", "Dias Macedo", "Edson Queiroz", "Jardim das Oliveiras", "José de Alencar", "Parque Dois Irmãos", "Parque Iracema", "Parque Manibura", "Passaré", "Sabiaguaba", "Sapiranga")
+  # Bairros_Ais8 <- c("Barra do Ceará", "Cristo Redentor", "Floresta", "Jardim Guanabara", "Jardim Iracema", "Pirambu", "Vila Velha")
+  # Bairros_Ais9 <- c("Canindezinho", "Conjunto Esperança", "Conjunto José Walter", "Jardim Cearense", "Maraponga", "Mondubim", "Parque Santa Rosa", "Parque São José", "Planalto Ayrton Senna", "Parque Presidente Vargas", "Vila Manuel Sátiro")
+  # Bairros_Ais10 <- c("Cidade 2000", "Cocó", "Dionísio Torres", "Engenheiro Luciano Cavalcante", "Guararapes", "Joaquim Távora", "De Lourdes", "Manuel Dias Branco", "Papicu", "Praia do Futuro I", "Praia do Futuro II", "Salinas", "São João do Tauape")
+  
+  # Bairros_Ais1 <- c("Aldeota", "Cais Do Porto", "Meireles", "Mucuripe", "Praia De Iracema", "Varjota", "Vicente Pinzon",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais2 <- c("Bom Jardim", "Conjunto Ceara I", "Conjunto Ceara II", "Genibau", "Granja Lisboa", "Granja Portugal", "Siqueira",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais3 <- c("Ancuri", "Barroso", "Coacu", "Conjunto Palmeiras", "Curio", "Guajeru", "Jangurussu", "Lagoa Redonda", "Messejana", "Parque Santa Maria", "Paupina", "Pedras", "Sao Bento",NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais4 <- c("Alvaro Weyne", "Carlito Pamplona", "Centro", "Farias Brito", "Jacarecanga", "Monte Castelo", "Moura Brasil", "Sao Gerardo", "Vila Ellery",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais5 <- c("Aeroporto", "Benfica", "Bom Futuro", "Couto Fernandes", "Damas", "Democrito Rocha", "Dende", "Fatima", "Itaoca", "Itaperi", "Jardim America", "Jose Bonifacio", "Montese", "Pan Americano", "Parangaba", "Parreao", "Serrinha", "Vila Pery", "Vila Uniao")
+  # Bairros_Ais6 <- c("Amadeu Furtado", "Antonio Bezerra", "Autran Nunes", "Bela Vista", "Bonsucesso", "Dom Lustosa", "Henrique Jorge", "Joao XXIII", "Joquei Clube", "Padre Andrade", "Parque Araxa", "Parquelandia", "Pici", "Presidente Kennedy", "Quintino Cunha", "Rodolfo Teofilo",NA,NA,NA)
+  # Bairros_Ais7 <- c("Aerolandia", "Alto da Balanca", "Boa Vista", "Cajazeiras", "Cambeba", "Cidade dos Funcionarios", "Dias Macedo", "Edson Queiroz", "Jardim das Oliveiras", "Jose De Alencar", "Parque Dois Irmaos", "Parque Iracema", "Parque Manibura", "Passare", "Sabiaguaba", "Sapiranga",NA,NA,NA)
+  # Bairros_Ais8 <- c("Barra Do Ceara", "Cristo Redentor", "Floresta", "Jardim Guanabara", "Jardim Iracema", "Pirambu", "Vila Velha",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais9 <- c("Canindezinho", "Conjunto Esperanca", "Conjunto Jose Walter", "Jardim Cearense", "Maraponga", "Mondubim", "Parque Santa Rosa", "Parque Sao Jose", "Planalto Ayrton Senna", "Parque Presidente Vargas", "Vila Manuel Satiro",NA,NA,NA,NA,NA,NA,NA,NA)
+  # Bairros_Ais10 <- c("Cidade 2000", "Coco", "Dionisio Torres", "Engenheiro Luciano Cavalcante", "Guararapes", "Joaquim Tavora", "De Lourdes", "Manuel Dias Branco", "Papicu", "Praia Do Futuro I", "Praia Do Futuro II", "Salinas", "Sao Joao Do Tauape",NA,NA,NA,NA,NA,NA)
+  
+  # Cria vetor com nomes dos grupos de bairros por ais
+  Bairros_Ais1 <- c("Aldeota", "Cais Do Porto", "Meireles", "Mucuripe", "Praia De Iracema", "Varjota", "Vicente Pinzon")
+  Bairros_Ais2 <- c("Bom Jardim", "Conjunto Ceara I", "Conjunto Ceara II", "Genibau", "Granja Lisboa", "Granja Portugal", "Siqueira")
+  Bairros_Ais3 <- c("Ancuri", "Barroso", "Coacu", "Conjunto Palmeiras", "Curio", "Guajeru", "Jangurussu", "Lagoa Redonda", "Messejana", "Parque Santa Maria", "Paupina", "Pedras", "Sao Bento")
+  Bairros_Ais4 <- c("Alvaro Weyne", "Carlito Pamplona", "Centro", "Farias Brito", "Jacarecanga", "Monte Castelo", "Moura Brasil", "Sao Gerardo", "Vila Ellery")
+  Bairros_Ais5 <- c("Aeroporto", "Benfica", "Bom Futuro", "Couto Fernandes", "Damas", "Democrito Rocha", "Dende", "Fatima", "Itaoca", "Itaperi", "Jardim America", "Jose Bonifacio", "Montese", "Pan Americano", "Parangaba", "Parreao", "Serrinha", "Vila Pery", "Vila Uniao")
+  Bairros_Ais6 <- c("Amadeu Furtado", "Antonio Bezerra", "Autran Nunes", "Bela Vista", "Bonsucesso", "Dom Lustosa", "Henrique Jorge", "Joao XXIII", "Joquei Clube", "Padre Andrade", "Parque Araxa", "Parquelandia", "Pici", "Presidente Kennedy", "Quintino Cunha", "Rodolfo Teofilo")
+  Bairros_Ais7 <- c("Aerolandia", "Alto da Balanca", "Boa Vista", "Cajazeiras", "Cambeba", "Cidade dos Funcionarios", "Dias Macedo", "Edson Queiroz", "Jardim das Oliveiras", "Jose De Alencar", "Parque Dois Irmaos", "Parque Iracema", "Parque Manibura", "Passare", "Sabiaguaba", "Sapiranga")
+  Bairros_Ais8 <- c("Barra Do Ceara", "Cristo Redentor", "Floresta", "Jardim Guanabara", "Jardim Iracema", "Pirambu", "Vila Velha")
+  Bairros_Ais9 <- c("Canindezinho", "Conjunto Esperanca", "Conjunto Jose Walter", "Jardim Cearense", "Maraponga", "Mondubim", "Parque Santa Rosa", "Parque Sao Jose", "Planalto Ayrton Senna", "Parque Presidente Vargas", "Vila Manuel Satiro")
+  Bairros_Ais10 <- c("Cidade 2000", "Coco", "Dionisio Torres", "Engenheiro Luciano Cavalcante", "Guararapes", "Joaquim Tavora", "De Lourdes", "Manuel Dias Branco", "Papicu", "Praia Do Futuro I", "Praia Do Futuro II", "Salinas", "Sao Joao Do Tauape")
+  
+  # Cria vetor com nomes das ais
+  Ais_fortaleza <- c(paste0("Ais ", 1:10))
+  
+  # Cria vetor com nomes das ais em lista sequencial
+  Coluna_Ais <- c(rep("Ais 1", length.out= length(Bairros_Ais1)),
+                  rep("Ais 2", length.out= length(Bairros_Ais2)),
+                  rep("Ais 3", length.out= length(Bairros_Ais3)),
+                  rep("Ais 4", length.out= length(Bairros_Ais4)),
+                  rep("Ais 5", length.out= length(Bairros_Ais5)),
+                  rep("Ais 6", length.out= length(Bairros_Ais6)),
+                  rep("Ais 7", length.out= length(Bairros_Ais7)),
+                  rep("Ais 8", length.out= length(Bairros_Ais8)),
+                  rep("Ais 9", length.out= length(Bairros_Ais9)),
+                  rep("Ais 10", length.out= length(Bairros_Ais10)))
+  
+  # Cria vetor com nomes dos bairros em lista sequencial
+  Coluna_Bairros <- c(Bairros_Ais1, Bairros_Ais2, Bairros_Ais3, Bairros_Ais4, Bairros_Ais5, Bairros_Ais6, Bairros_Ais7, Bairros_Ais8, Bairros_Ais9, Bairros_Ais10)
+  
+  df_ais_fortaleza <- data.frame(BAIRRO = Coluna_Bairros, AIS = Coluna_Ais)
+  
+  # Geocodificacao
+  # Criando lista de bairros geolocalizados com ggmap e API Google (Depois farei testes com API Yahoo)
+  if(!exists("df_bairros_geo")) {
+    #Habilitar API Google para utlizar ggmap
+    suppressMessages(register_google(key = "AIzaSyAxnGSaU3mFZanbLuTOQ2vk405Gjp_u6v4", 
+                                     account_type = "standard", 
+                                     client = "weighty-flux-244912", 
+                                     second_limit = 50, 
+                                     day_limit = 2500, 
+                                     write = TRUE))
+    suppressMessages(ggmap_show_api_key())
+    print("Google API")
+    showing_key()
+    suppressMessages(ggmap_hide_api_key())
+    
+    print("Geocodificando bairros de Fortaleza atraves do Google")
+    
+    # Geocodifica bairros
+    df_bairros_geo <- suppressMessages(geocode(location = paste(
+      df_ais_fortaleza$BAIRRO, "fortaleza", "ceara", sep = ", "), output = "latlona", source = "google", force = FALSE) %>% as.data.frame(.))
+    
+    # cria data frame como variavel global
+    assign('df_bairros_geo', df_bairros_geo, envir=.GlobalEnv)
+    df_bairros_geo <- df_bairros_geo[,c(2,1,3)] # reordena coluna 
+    
+    # Altera cabecalho do data frame
+    names(df_bairros_geo) <- c("LATITUDE", "LONGITUDE", "BAIRRO")
+  }
+  
+  # Cria data frame dos bairros com ais correspondente e geolocalizacao
+  df_ais_bairros_geo <- data.frame(df_ais_fortaleza, df_bairros_geo[, 1:2])
+  
+  # Faz merge dos bairros no data frame df_dados
+  df_merge_ais <- merge(df_dados, df_ais_bairros_geo, by.x=c('AIS'), by.y=c('AIS')) %>% 
+    # reordena titulos do cabecalho 
+    .[,c(2,1,3:ncol(.))] %>%
+    # Classifica por data
+    arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
+    # Atualiza ID
+    mutate(ID = c(1:nrow(.))) 
+
+  return(df_merge_ais)
+}
+
+# Funcao para criar variavel incidencia de homicidio por bairro
+merge_dados_incidencia_homicidio_bairro <- function(df_dados) {
+  
+  # obtem o numero de incidencia
+  df_merge_incidencia <- df_dados %>%
+    group_by(BAIRRO) %>%
+    tally(name = "INCIDENCIA_HOMICIDIO_BAIRRO")
+  
+  # faz merge com o data frame origem df_dados
+  df_merge_geo_incidencia <- merge(df_dados, df_merge_incidencia, by.x=c('BAIRRO'), by.y=c('BAIRRO')) %>%
+    # reordena titulos do cabecalho
+    .[, c(2:11,1,12:14)] %>%
+    # Classifica por data
+    arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    # Atualiza ID
+    mutate(ID = c(1:nrow(.)))
+  
+  return(df_merge_geo_incidencia)
+}
+

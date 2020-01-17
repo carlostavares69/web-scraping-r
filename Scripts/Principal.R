@@ -6,7 +6,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        03/08/2019
-# Atualizado:  08/01/2020
+# Atualizado: 16/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -97,8 +97,11 @@ gera_grafico_comparacao_imputacao(df_crime_ce_2014_2019_missing, df_crime_ce_201
 ##############################################################################################
 ## MERGES
 ##############################################################################################
-# Adiciona novas variaveis ao conjunto de dados
-df_crime_ce_2014_2019_merges <- executa_merges(df_crime_ce_2014_2019_imputado)
+# Adiciona novas variaveis ao conjunto de dados de MUNICIPIOS do Ceara
+df_crime_ce_2014_2019_merges <- df_municipios_executa_merges(df_crime_ce_2014_2019_imputado)
+
+# Adiciona novas variaveis ao conjunto de dados de BAIRROS de Fortaleza
+df_crime_ce_2014_2019_merges_bairros <- df_bairros_executa_merges(df_crime_ce_2014_2019_imputado)
 
 ##############################################################################################
 ## EXPORTACAO
@@ -120,20 +123,74 @@ exporta_csv(obtem_dados_por_ano(df_crime_ce_2014_2019_merges, 2014, 2014), "Homi
 crime_ceara <- importa_csv("personalizado", paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges",".csv"))
 
 # Seleciona apenas colunas relevantes para analise
-cols_relevantes <- c("ID","MUNICIPIO_HOMICIDIO","NATUREZA_HOMICIDIO","ARMA_UTILIZADA","DATA_HOMICIDIO","SEXO","IDADE","INCIDENCIA_HOMICIDIO","MES_ANO","FAIXA_ETARIA","GRUPO_MUNICIPIO","ARMA_DE_FOGO","POPULACAO","IDHM","PIB_PERCAPITA","LATITUDE","LONGITUDE")
+cols_relevantes <- c("ID","MUNICIPIO_HOMICIDIO","NATUREZA_HOMICIDIO","ARMA_UTILIZADA","DATA_HOMICIDIO","SEXO","IDADE","INCIDENCIA_HOMICIDIO","MES_ANO","FAIXA_ETARIA","GRUPO_MUNICIPIO","GRUPO_AIS","ARMA_DE_FOGO","POPULACAO","IDHM","PIB_PERCAPITA","LATITUDE","LONGITUDE")
 crime_ceara <- dplyr::select(crime_ceara, cols_relevantes)
 
 ##############################################################################################
 ## ANALISE
 ##############################################################################################
 
+lapply(crime_ceara, function(x) sum(is.na(x))) # Verifando os valores ausentes
 head(crime_ceara)
 str(crime_ceara)
 summary(crime_ceara)
 
-# Verifando os valores ausentes
-lapply(crime_ceara, function(x) sum(is.na(x)))
-
 ##############################################################################################
 ## VISUALIZAÇÃO
 ##############################################################################################
+
+#install.packages("plotly")
+library(plotly)
+library(sf)
+
+mapboxToken <- paste(readLines("../.mapbox_token"), collapse="")    # You need your own token
+
+mapboxToken <- c("pk.eyJ1IjoiZXJpdmFuZG9yYW1vcyIsImEiOiJjazVobXkzNXIwNWhmM3JudjJqMHR1MDdlIn0.LFq36FW2CPZ8n5Yw16fQ9w")
+Sys.setenv("MAPBOX_TOKEN" = mapboxToken) # for Orca
+
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+
+# Importando o arquivo Shapefile (Fonte IBGE) com informacoes geograficas e coordenadas GPS
+if(!exists("dados_shp")) {
+  dados_shp <- rgdal::readOGR(dsn = file.path(".", dir_auxiliares, "Shapefile_SHP/BR_Localidades_2010_v1.shp"), layer = "BR_Localidades_2010_v1", verbose = FALSE)
+  # Cria variavel global
+  assign('dados_shp', dados_shp, envir=.GlobalEnv)
+}
+# Filtro por municipios do Ceara
+df_geo <- dados_shp[which(as.numeric(dados_shp$CD_NIVEL) == 1 & as.character(dados_shp$NM_UF) == "CEARÁ"),] %>% 
+  as.data.frame(.) %>% 
+  select(., LAT, LONG, NM_MUNICIP) %>%
+  rename(LATITUDE = LAT) %>%
+  rename(LONGITUDE = LONG) %>% 
+  mutate(LATITUDE = format(LATITUDE, trim = TRUE, digits = 7), LONGITUDE = format(LONGITUDE, trim = TRUE, digits = 7), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+  mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
+
+view(df_geo@data)
+
+
+library(plotly)
+
+mapboxToken <- paste(readLines("../.mapbox_token"), collapse=mapboxToken)    # You need your own token
+Sys.setenv("MAPBOX_TOKEN" = mapboxToken) # for Orca
+
+crime_ceara %>%
+ # group_by(MUNICIPIO_HOMICIDIO) %>%
+  plot_mapbox(x = ~LONGITUDE, y = ~LATITUDE, color = ~INCIDENCIA_HOMICIDIO, colors = c('#ffeda0','#f03b20'),
+              text = ~NATUREZA_HOMICIDIO, hoverinfo = 'text', showlegend = FALSE) %>%
+  add_polygons(
+    line = list(width = 0.4)
+  ) %>%
+  add_polygons(fillcolor = 'transparent',
+               line = list(color = 'black', width = 0.5),
+               showlegend = FALSE, hoverinfo = 'none'
+  ) %>%
+  layout(
+    xaxis = list(title = "", showgrid = FALSE, showticklabels = FALSE),
+    yaxis = list(title = "", showgrid = FALSE, showticklabels = FALSE),
+    mapbox = list(
+      style = 'light',
+      zoom = 4,
+      center = list(lat = ~median(LATITUDE), lon = ~median(LONGITUDE))),
+    margin = list(l = 0, r = 0, b = 0, t = 0, pad = 0)
+  ) %>%
+  config(mapboxAccessToken = Sys.getenv("MAPBOX_TOKEN"))
