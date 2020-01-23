@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  16/01/2020
+# Atualizado:  17/01/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -153,9 +153,7 @@ obtem_arquivos <- function() {
 
 # Funcao que convert data frame em arquivo CSV
 exporta_csv <- function(df_limpo, nome_csv=NA) {
-  # classes dos tipos de colunas
-  classes_colunas <- sapply(df_limpo, class)
-  
+
   # Salvar dados em arquivo CSV
   if(is.na(nome_csv)) {
     nome_arquivo_csv <- file.path(".", dir_dados, paste0(nome_csv, ".csv"))
@@ -167,6 +165,7 @@ exporta_csv <- function(df_limpo, nome_csv=NA) {
   # Escrever arquivo CSV
   readr::write_excel_csv2(x = df_limpo, path = nome_arquivo_csv, na = "NA", col_names = TRUE, delim = ";")
 }
+
 
 # Funcao que obtem dados do arquivo CSV
 importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
@@ -216,8 +215,8 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       POPULACAO = col_number(),
       IDHM = col_number(),
       PIB_PERCAPITA = col_number(),
-      LATITUDE = col_number(),
-      LONGITUDE = col_number()
+      LATITUDE = col_character(),
+      LONGITUDE = col_character()
     )
   } else if(status_classes == "personalizado") {
     classes_colunas <- cols(
@@ -243,6 +242,31 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       LATITUDE = col_number(),
       LONGITUDE = col_number()
     )
+  } else if(status_classes == "fortaleza") {
+    classes_colunas <- cols(
+      ID = col_number(), 
+      AIS = col_character(), 
+      MUNICIPIO_HOMICIDIO = col_character(), 
+      NATUREZA_HOMICIDIO = col_character(), 
+      ARMA_UTILIZADA = col_character(), 
+      DATA_HOMICIDIO = col_character(), 
+      #NOME_VITIMA = col_character(), 
+      #GUIA_CADAVERICA = col_character(), 
+      SEXO = col_character(), 
+      IDADE = col_number(), 
+      INCIDENCIA_HOMICIDIO_BAIRRO = col_number(),
+      MES_ANO = col_character(),
+      FAIXA_ETARIA = col_character(),
+      # GRUPO_MUNICIPIO = col_character(),
+      # GRUPO_AIS = col_character(),
+      ARMA_DE_FOGO = col_character(),
+      BAIRRO = col_character(),
+      # POPULACAO = col_number(),
+      # IDHM = col_number(),
+      # PIB_PERCAPITA = col_number(),
+      LATITUDE = col_number(),
+      LONGITUDE = col_number()
+    )
   }
   
   # Importanto CSV
@@ -250,7 +274,7 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
                                  delim = ";",
                                  na = "NA",
                                  col_names = TRUE,
-                                 col_types = classes_colunas,
+                                 col_types = classes_colunas, 
                                  #locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ".", date_format = "%d/%m/%Y"),
                                  locale = locale(date_names = "pt", encoding = "UTF-8", decimal_mark = ",", grouping_mark = ".", date_format = "%d/%m/%Y"),
                                  progress = show_progress())
@@ -290,7 +314,7 @@ padroniza_dados <- function(df_dados) {
            NATUREZA_HOMICIDIO = remove_acentos(str_trim(NATUREZA_HOMICIDIO)), 
            ARMA_UTILIZADA =  remove_acentos(str_trim(ARMA_UTILIZADA)), 
            DATA_HOMICIDIO = str_trim(DATA_HOMICIDIO), 
-           NOME_VITIMA =  remove_acentos(str_trim(NOME_VITIMA)), 
+           NOME_VITIMA =  stringr::str_squish(remove_acentos(str_trim(NOME_VITIMA))), 
            GUIA_CADAVERICA = str_trim(GUIA_CADAVERICA), 
            SEXO = remove_acentos(str_trim(SEXO)), 
            IDADE = str_trim(IDADE))
@@ -463,34 +487,6 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
   ais9 <- c("AIS 9 C", "AIS 9 H", "AIS 9 E")
   ais10 <- c("A 303 AIS 10", "ULEIRO DO 300 AIS 10")
   
-  # [25] NA                                                                                       
-  # [28] ""                                                                      
-  # [31]                                                       "AIS 9 "                             
-  # [34] "AIS 7 "                              "AIS 4 "                              "AIS 5 "                             
-  # [37]  " AIS 16"                             " AIS 3"                             
-  # [40] " AIS 11"                             " AIS 15"                             "AZEIRO DO 15 AIS 11"                
-  # [43] " AIS 10"                             " AIS 1"                              " AIS 13"                            
-  # [46] " AIS 2"                              " AIS 8"                              " AIS 17"                            
-  # [49] " AIS 12"                             " AIS 9"                              "UBO SEGUIDO DE 31 AIS 17"           
-  # [52] " AIS 4"                              "UBO SEGUIDO DE 40 AIS 11"            " AIS 5"                             
-  # [55] "AZEIRO DO 45 AIS 11"                 "AZEIRO DO 46 AIS 11"                 " AIS 17 "                           
-  # [58] " AIS 10 "                            "AZEIRO D"                                                       
-  # [61] " AIS 16 "                            " AIS 12 "                                                       
-  # [64]                                                                                             
-  # [67]                                                                   " AIS 18"                            
-  # [70] "UBO SEGUIDO DE 99 AIS 12"            " AIS 14"                             " AIS 7"                             
-  # [73] "ZEIRO DO 112 AIS 11"                "ZEIRO DO 122 AIS 11"                 "ZEIRO DO 123 AIS 11"                
-  # [76] "ZEIRO DO 133 AIS 11"                                             
-  # [79]                                      " AIS 13 "                              "OEIRO DO"                           
-  # [82] " AIS 15 "                                                                                   
-  # [85] " AIS 11 "                                                                 "BO SEGUIDO DE 155 AIS 15"           
-  # [88]                "OCA DE 191 AIS 17"                                  
-  # [91]                "BO SEGUIDO DE 212 AIS 12"                           
-  # [94]                             
-  # [97]                                         "ZEIRO DO 308 AIS 11"                
-  # [100] " AIS 6"                              "ZEIRO DO 351 AIS 11"                               
-  # [103] "ZEIRO DO 373 AIS 11"                 "TANA DO 375 AIS 12"
-  
   # Padroniza valores da coluna 2
   df_tabela <- df_tabela %>%
     mutate(V2 = str_trim(V2)) %>% 
@@ -505,7 +501,7 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
     mutate(V2 = replace(V2, V2 %in% ais10, "Ais 10")) %>% 
     mutate(V2 = replace(V2, V2 %in% aisNA, NA)) 
   
-  # Padroniza valores da coluna 5, 9 e 10  
+  # Padroniza valores da coluna 4, 5, 7, 9 e 10  
   tipo1 <- c("ARMA DE FOGO E ARMA")
   tipo2 <- c("ARMA  DE FOGO","ARAMA DE FOGO","ARMADE FOGO","ARM DE FOGO","ARMA D FOGO","ARM ADE FOGO","ARMA FOGO", "Arma de fogo")
   tipo3 <- c("ARAMA BRANCA","ARMA DE BRANCA","ARMA DE FACA","ARAMA DE BRANCA", "Arma branca")
@@ -517,6 +513,18 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
   tipo9 <- c("F")
   tipo10 <- c("","-")
   tipo11 <- c("LATROCINIO","LATROCÍNIO")
+  
+  # Adicionado posteriormente
+  tipo12 <- c("DESCONHECIDA DO SEXO FEMININO","DESCONHECIDO DO SEXO FEMININO")
+  tipo13 <- c("DESCONHECIDO  DO SEXO MASCULINO","DESCONHECIDO DO SEXO MASCULINO","DESCONHECIDO DO SEXO MASCULINO (CIOPS: ALISSON)","DESCONHECIDO MASCULINO","DESCONHECIDO SEXO MASCULINO")
+  tipo14 <- c("DESCONHECIDO","DESCONHECIDO - SEXO IDENTERMINADO - CORPO CARBONIZADO","DESCONHECIDO DO SEXO INDEFINIDO","DESCONHECIDO INDEFINIDO","DESCONHECIDO SEXO NAO IDENTIFICADO")
+  
+  # Padroniza valores da coluna 7
+  df_tabela <- df_tabela %>%
+    mutate(V7 = str_trim(V7)) %>% 
+    mutate(V7 = replace(V7, V7 %in% tipo12, "DESCONHECIDO DO SEXO FEMININO")) %>%  
+    mutate(V7 = replace(V7, V7 %in% tipo13, "DESCONHECIDO DO SEXO MASCULINO")) %>% 
+    mutate(V7 = replace(V7, V7 %in% tipo14, "DESCONHECIDO DO SEXO INDEFINIDO"))
 
   for (n_linha in 1:nrow(df_tabela)) {
     # Padroniza valores da coluna 4
@@ -541,6 +549,7 @@ padroniza_colunas_inconsistentes <- function(df_tabela) {
         df_tabela[n_linha,5] <- c("NÃO INFORMADO")
       }
     }
+    
     # Padroniza valores da coluna 9
     if(!is.na(df_tabela[n_linha,9])) {
       if(df_tabela[n_linha,9] %in% tipo6) {
@@ -670,9 +679,10 @@ merge_dados_geo <- function(df_dados) {
     select(., LAT, LONG, NM_MUNICIP) %>%
     rename(LATITUDE = LAT) %>%
     rename(LONGITUDE = LONG) %>% 
-    mutate(LATITUDE = format(LATITUDE, trim = TRUE, digits = 7), LONGITUDE = format(LONGITUDE, trim = TRUE, digits = 7), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+    #mutate(LATITUDE = format(LATITUDE, trim = TRUE, digits = 7), LONGITUDE = format(LONGITUDE, trim = TRUE, digits = 7), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
+    mutate(LATITUDE = as.numeric(LATITUDE), LONGITUDE = as.numeric(LONGITUDE), NM_MUNICIP = as.character(NM_MUNICIP)) %>% 
     mutate(NM_MUNICIP = remove_acentos(toupper(NM_MUNICIP)))
-  
+  str(df_geo)
   # Converte variavel para maiusculo e remove acentuacao
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
@@ -830,7 +840,7 @@ merge_dados_pib <- function(df_dados) {
     rename(MUNICIPIO = "...1", PIB_PERCAPITA = "...7") %>% 
     mutate(PIB_PERCAPITA = as.numeric(PIB_PERCAPITA)) %>% 
     mutate(MUNICIPIO = remove_acentos(toupper(MUNICIPIO)))
-  
+
   # Converte variavel para maiusculo
   df_dados <- df_dados %>% mutate(MUNICIPIO_HOMICIDIO = toupper(MUNICIPIO_HOMICIDIO))
   
@@ -1094,7 +1104,7 @@ merge_grupo_ais <- function(df_dados) {
   # Cria nova variavel com grupo de municipios
   df_dados_ais <- df_dados %>%
     mutate(GRUPO_AIS = case_when(AIS %in% capital ~ "Capital", 
-                                 AIS %in% rmf_fortaleza ~ "Regiao Metropolitana", 
+                                 AIS %in% rmf ~ "Regiao Metropolitana", 
                                  AIS %in% interior_norte ~ "Interior Norte", 
                                  AIS %in% interior_sul ~ "Interior Sul",
                                  AIS == "Unidade Prisional" ~ paste0("Unidade Prisional"," de ",MUNICIPIO_HOMICIDIO)))
@@ -1190,7 +1200,6 @@ merge_dados_bairro_geo <- function(df_dados) {
     suppressMessages(ggmap_hide_api_key())
     
     print("Geocodificando bairros de Fortaleza atraves do Google")
-    
     # Geocodifica bairros
     df_bairros_geo <- suppressMessages(geocode(location = paste(
       df_ais_fortaleza$BAIRRO, "fortaleza", "ceara", sep = ", "), output = "latlona", source = "google", force = FALSE) %>% as.data.frame(.))

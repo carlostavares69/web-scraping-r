@@ -66,7 +66,7 @@ pacotes_analise <- c("tidyverse","tabulizer","rvest","stringi","readxl","lubrida
                      "tabplot", "kableExtra", "ggmap")
 
 # Pacotes necessarios para RMarkdown.
-pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","devtools","rJava")
+pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","devtools","rJava","webshot")
 
 for (pkg in c(pacotes_padrao, pacotes_analise)) {
   if (!(pkg %in% rownames(installed.packages()))){ 

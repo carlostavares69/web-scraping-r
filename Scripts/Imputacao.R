@@ -156,8 +156,8 @@ realiza_imputacao_dados <- function(df_pronto) {
   # Faz uniao de data frames para manter estrutura anterior do conjunto de dados.
   df_pronto_imputado <- cbind(crime_ce_reservado, df_pronto_imputado)
   
-  cols_relevantes<- c("NATUREZA_HOMICIDIO","ARMA_UTILIZADA","SEXO","IDADE")
-  cols_irrelevantes<- c("ID","AIS","MUNICIPIO_HOMICIDIO","DATA_HOMICIDIO","NOME_VITIMA","GUIA_CADAVERICA")
+  # cols_irrelevantes<- c("ID","AIS","MUNICIPIO_HOMICIDIO","DATA_HOMICIDIO","NOME_VITIMA","GUIA_CADAVERICA")
+  # cols_relevantes<- c("NATUREZA_HOMICIDIO","ARMA_UTILIZADA","SEXO","IDADE")
 
   # Reordena colunas 
   df_pronto_imputado <- df_pronto_imputado[, c(1:3,7:8,4,5,6,9,10)]
