@@ -63,7 +63,7 @@ for (diretorio in diretorios) {
 # Pacotes utilizados na analise.
 pacotes_analise <- c("tidyverse","tabulizer","rvest","stringi","readxl","lubridate","rgdal",
                      "leaflet","htmlwidgets","ggthemes","forecast","prophet", "mice", 
-                     "tabplot", "kableExtra", "ggmap")
+                     "tabplot", "kableExtra", "ggmap","stringr")
 
 # Pacotes necessarios para RMarkdown.
 pacotes_padrao <- c("rmarkdown","knitr","prettydoc","tinytex","devtools","rJava","webshot")

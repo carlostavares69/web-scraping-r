@@ -5,7 +5,7 @@
 # Autor:       Erivando Sena
 # E-mail:      erivandosena@gmail.com 
 # Data:        20/08/2019
-# Atualizado:  17/01/2020
+# Atualizado:  05/02/2020
 ##-------------------------------------------------------------------------------------------#
 
 ##############################################################################################
@@ -189,6 +189,7 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       NATUREZA_HOMICIDIO = col_character(), 
       ARMA_UTILIZADA = col_character(), 
       DATA_HOMICIDIO = col_character(), 
+      HORA_HOMICIDIO = col_character(), 
       NOME_VITIMA = col_character(), 
       GUIA_CADAVERICA = col_character(), 
       SEXO = col_character(), 
@@ -202,6 +203,7 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       NATUREZA_HOMICIDIO = col_character(), 
       ARMA_UTILIZADA = col_character(), 
       DATA_HOMICIDIO = col_character(), 
+      HORA_HOMICIDIO = col_character(), 
       NOME_VITIMA = col_character(), 
       GUIA_CADAVERICA = col_character(), 
       SEXO = col_character(), 
@@ -226,6 +228,7 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       NATUREZA_HOMICIDIO = col_character(), 
       ARMA_UTILIZADA = col_character(), 
       DATA_HOMICIDIO = col_character(), 
+      HORA_HOMICIDIO = col_character(), 
       #NOME_VITIMA = col_character(), 
       #GUIA_CADAVERICA = col_character(), 
       SEXO = col_character(), 
@@ -250,15 +253,14 @@ importa_csv <- function(status_classes, nome_csv, local_arquivo_csv=NA) {
       NATUREZA_HOMICIDIO = col_character(), 
       ARMA_UTILIZADA = col_character(), 
       DATA_HOMICIDIO = col_character(), 
+      HORA_HOMICIDIO = col_character(), 
       #NOME_VITIMA = col_character(), 
       #GUIA_CADAVERICA = col_character(), 
       SEXO = col_character(), 
       IDADE = col_number(), 
-      INCIDENCIA_HOMICIDIO_BAIRRO = col_number(),
+      INCIDENCIA_HOMICIDIO = col_number(),
       MES_ANO = col_character(),
       FAIXA_ETARIA = col_character(),
-      # GRUPO_MUNICIPIO = col_character(),
-      # GRUPO_AIS = col_character(),
       ARMA_DE_FOGO = col_character(),
       BAIRRO = col_character(),
       # POPULACAO = col_number(),
@@ -296,7 +298,7 @@ remove_acentos <- function(obj_str) {
 
 # Funcao para padronizar o formato dos dados
 padroniza_dados <- function(df_dados) {
-  
+
   # Renomeia colunas
   df_dados <- df_dados %>% 
     rename(MUNICIPIO_HOMICIDIO = MUNICIPIO) %>% 
@@ -327,9 +329,11 @@ padroniza_dados <- function(df_dados) {
     mutate(ARMA_UTILIZADA = replace(ARMA_UTILIZADA, ARMA_UTILIZADA == "Nao Informado", NA)) %>%
     mutate(SEXO = replace(SEXO, SEXO == "Nao Identificado", NA)) 
   
-  
   # Organiza as observacoes da coluna 2 (AIS)
   df_dados <- corrige_grupo_ais_municipios(df_dados)
+  
+  # Merge com variavel HORA
+  df_dados <- merge_hora(df_dados)
   
   # Atribui ID classificado por DATA
   df_dados <- df_dados %>% 
@@ -711,18 +715,20 @@ merge_dados_geo <- function(df_dados) {
 # Funcao para merge grupo municipios
 merge_grupo_municipios <- function(df_dados) {
   # 19 Municipios da Região Metropolitana de Fortaleza
-  municipios_RMF <- c("Aquiraz","Cascavel","Caucaia","Chorozinho","Eusebio","Fortaleza","Guaiuba",
-                      "Horizonte","Itaitinga","Maracanau","Maranguape","Pacajus","Pacatuba","Pindoretama",
-                      "Sao Goncalo Do Amarante","Sao Luis Do Curu","Paraipaba","Paracuru","Trairi")
-  
-  # Nega o TRUE de %in%
-  `%notin%` <- Negate(`%in%`) 
+  # municipios_RMF <- c("Aquiraz","Cascavel","Caucaia","Chorozinho","Eusebio","Fortaleza","Guaiuba",
+  #                     "Horizonte","Itaitinga","Maracanau","Maranguape","Pacajus","Pacatuba","Pindoretama",
+  #                     "Sao Goncalo Do Amarante","Sao Luis Do Curu","Paraipaba","Paracuru","Trairi")
+  # 
+  # # Nega o TRUE de %in%
+  # `%notin%` <- Negate(`%in%`) 
   
   # Cria nova variavel com grupo de municipios
   df_dados <- df_dados %>%
+    # mutate('GRUPO_MUNICIPIO' = case_when(MUNICIPIO_HOMICIDIO == 'Fortaleza' ~ "Capital", 
+    #                                      MUNICIPIO_HOMICIDIO %in% municipios_RMF ~ "Regiao Metropolitana", 
+    #                                      MUNICIPIO_HOMICIDIO %notin% municipios_RMF ~ "Interior"))
     mutate('GRUPO_MUNICIPIO' = case_when(MUNICIPIO_HOMICIDIO == 'Fortaleza' ~ "Capital", 
-                                         MUNICIPIO_HOMICIDIO %in% municipios_RMF ~ "Regiao Metropolitana", 
-                                         MUNICIPIO_HOMICIDIO %notin% municipios_RMF ~ "Interior"))
+                                         MUNICIPIO_HOMICIDIO != 'Fortaleza' ~ "Interior"))
   return(df_dados)
 }
 
@@ -730,12 +736,14 @@ merge_grupo_municipios <- function(df_dados) {
 merge_grupo_idades <- function(df_dados){
   # Cria nova variavel para grupo de idades.
   df_dados <- df_dados %>%
-    mutate(
-      #Idade = ifelse(is.na(IDADE), mean(full$IDADE, na.rm=TRUE), IDADE), # Media das idades (Substitui idade NA pela media das idades)
-      'FAIXA_ETARIA' = case_when(IDADE < 13 ~ "0 a 12 anos", 
-                                 IDADE >= 13 & IDADE < 18 ~ "13 a 17 anos", 
-                                 IDADE >= 18 & IDADE < 60 ~ "18 a 59 anos", 
-                                 IDADE >= 60 ~ "60 anos a cima"))
+    # mutate('FAIXA_ETARIA' = case_when(IDADE < 13 ~ "0 a 12 anos", 
+    #                              IDADE >= 13 & IDADE < 18 ~ "13 a 17 anos", 
+    #                              IDADE >= 18 & IDADE < 60 ~ "18 a 59 anos", 
+    #                              IDADE >= 60 ~ "60 anos a cima"))
+    mutate('FAIXA_ETARIA' = case_when(IDADE < 15 ~ "0 a 14 anos", 
+                                      IDADE >= 15 & IDADE <= 19 ~ "15 a 19 anos", # nova faixa incluida
+                                      IDADE >= 20 & IDADE < 60 ~ "20 a 59 anos", 
+                                      IDADE >= 60 ~ "60 anos a cima"))
   return(df_dados)
 }
 
@@ -744,7 +752,6 @@ merge_grupo_arma_fogo <- function(df_dados) {
   # Cria nova variavel com teste de Bernoulli para o tipo de Arma De Fogo
   df_dados <- df_dados %>% 
     mutate(ARMA_DE_FOGO = case_when(ARMA_UTILIZADA == "Arma De Fogo" ~ "Sim", ARMA_UTILIZADA != "Arma De Fogo" ~ "Nao")) 
-  # %>% arrange(desc(ARMA_DE_FOGO))
   return(df_dados)
 }
 
@@ -943,86 +950,6 @@ merge_dados_incidencia_homicidio_poranosexomunicipio <- function(df_dados) {
   return(df_incidencia_homicidio_anosexomunicipio)
 }
 
-# Funcao que faz os merges no data frame com municipios
-df_municipios_executa_merges <- function(df_dados_imputado) {
-  # INCIDENCIA_HOMICIDIO
-  df_dados_merges <- merge_variavel_incidencia_homicidio(df_dados_imputado)
-  
-  # MES_ANO
-  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
-  
-  # FAIXA_ETARIA
-  df_dados_merges <- merge_grupo_idades(df_dados_merges)
-  
-  # GRUPO_NATUREZA_HOMICIDIO
-  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
-  
-  # GRUPO_MUNICIPIO
-  df_dados_merges <- merge_grupo_municipios(df_dados_merges)
-  
-  # GRUPO_AIS
-  df_dados_merges <- merge_grupo_ais(df_dados_merges)
-  
-  # ARMA_DE_FOGO
-  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
-  
-  # POPULACAO
-  df_dados_merges <- merge_dados_populacao(df_dados_merges)
-  
-  # IDHM
-  df_dados_merges <- merge_dados_idhm(df_dados_merges)
-  
-  # PIB_PERCAPITA
-  df_dados_merges <- merge_dados_pib(df_dados_merges)
-  
-  # LATITUDE/LONGITUDE
-  df_dados_merges <- merge_dados_geo(df_dados_merges)
-  
-  print("Realizando exportacao para arquivo CSV:")
-  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges",".csv"))
-  
-  return(df_dados_merges)
-}
-
-# Funcao que faz os merges no data frame com bairros
-df_bairros_executa_merges <- function(df_dados_imputado) {
-  
-  # LATITUDE/LONGITUDE
-  df_dados_merges <- merge_dados_bairro_geo(df_dados_imputado)  
-  
-  # INCIDENCIA_HOMICIDIO
-  df_dados_merges <- merge_dados_incidencia_homicidio_bairro(df_dados_merges)
-
-  # MES_ANO
-  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
-
-  # FAIXA_ETARIA
-  df_dados_merges <- merge_grupo_idades(df_dados_merges)
-
-  # GRUPO_NATUREZA_HOMICIDIO
-  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
-
-  # ARMA_DE_FOGO
-  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
-  
-  # POPULACAO
-  #df_dados_merges <- merge_dados_populacao(df_dados_merges)
-  
-  # IDHM
-  #df_dados_merges <- merge_dados_idhm(df_dados_merges)
-  
-  # PIB_PERCAPITA
-  #df_dados_merges <- merge_dados_pib(df_dados_merges)
-
-  # reordena titulos do cabecalho
-  df_dados_merges <- df_dados_merges %>%
-    .[,c(1:10, 14:ncol(.), 11:13)] 
-  
-  print("Realizando exportacao para arquivo CSV:")
-  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges_Bairros",".csv"))
-  
-  return(df_dados_merges)
-}
 
 # Funcao para selecionar dataset por periodos de ano
 obtem_dados_por_ano <- function(df_dados, ano_inicial, ano_final) {
@@ -1217,12 +1144,13 @@ merge_dados_bairro_geo <- function(df_dados) {
   
   # Faz merge dos bairros no data frame df_dados
   df_merge_ais <- merge(df_dados, df_ais_bairros_geo, by.x=c('AIS'), by.y=c('AIS')) %>% 
-    # reordena titulos do cabecalho 
-    .[,c(2,1,3:ncol(.))] %>%
     # Classifica por data
     arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>% 
     # Atualiza ID
-    mutate(ID = c(1:nrow(.))) 
+    mutate(ID = c(1:nrow(.))) %>%
+    # Reordena titulos do cabecalho 
+    dplyr::select(names(df_dados), BAIRRO, LATITUDE, LONGITUDE)
+
 
   return(df_merge_ais)
 }
@@ -1233,17 +1161,303 @@ merge_dados_incidencia_homicidio_bairro <- function(df_dados) {
   # obtem o numero de incidencia
   df_merge_incidencia <- df_dados %>%
     group_by(BAIRRO) %>%
-    tally(name = "INCIDENCIA_HOMICIDIO_BAIRRO")
+    tally(name = "INCIDENCIA_HOMICIDIO")
   
   # faz merge com o data frame origem df_dados
   df_merge_geo_incidencia <- merge(df_dados, df_merge_incidencia, by.x=c('BAIRRO'), by.y=c('BAIRRO')) %>%
-    # reordena titulos do cabecalho
-    .[, c(2:11,1,12:14)] %>%
     # Classifica por data
     arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
     # Atualiza ID
-    mutate(ID = c(1:nrow(.)))
+    mutate(ID = c(1:nrow(.))) %>%
+    # reordena titulos do cabecalho
+    dplyr::select(names(df_dados), INCIDENCIA_HOMICIDIO) 
   
   return(df_merge_geo_incidencia)
 }
+
+# Funcao para merge da variavel HORA e atualizaca de outras variaveis
+merge_hora <- function(df_raspagem_original_limpo) {
+  
+  # Importa dados do arquivo CSV
+  # df_raspagem <- importa_csv("original", paste0(nome_arquivo,"_Original_Limpo",".csv")) %>% 
+  df_raspagem <- df_raspagem_original_limpo %>%
+    mutate(NOME_VITIMA = stringr::str_squish(NOME_VITIMA)) 
+  
+  # Importa dados da planilha EXCEL dos anos 2014-2019 fornecido pelo CSAI da SSPDS-CE em 21/01/2020
+  SSPDS_2014_2019_Ceara_Transparente <- suppressMessages(readxl::read_xlsx(file.path(".", dir_auxiliares, "CSAI da SSPDS-CE/CVLI_2014-2019_CSAI-SSPDS-CE.xlsx"), col_names = TRUE, sheet = "CVLI"))
+  
+  df_CSAI_SSPDS <- SSPDS_2014_2019_Ceara_Transparente %>%
+    mutate(DATA = format.Date(DATA, format="%d/%m/%Y")) %>% 
+    mutate(HORA = strftime(HORA, format='%H:%M:%S', tz = "GMT")) %>% 
+    arrange(as.Date(DATA, format="%d/%m/%Y")) %>% 
+    mutate_if(is.character, str_to_title) %>% 
+    mutate(`NOME DA VÍTIMA` = stringr::str_squish(remove_acentos(`NOME DA VÍTIMA`))) %>% 
+    .[,c(1,4,3,2,5,6,8,7,9)]
+  
+  names(df_CSAI_SSPDS) <- c(names(df_raspagem[2:6]),"HORA_HOMICIDIO",names(df_raspagem[c(7,9:10)]))
+  
+  ######## apenas para verificar a consistencia do numero de observacoes ######## 
+  # 2014
+  df_A_2014 <- df_raspagem  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2014)
+  
+  df_B_2014 <- df_CSAI_SSPDS %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2014)
+  
+  # 2015
+  df_A_2015 <- df_raspagem  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2015)
+  
+  df_B_2015 <- df_CSAI_SSPDS %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2015)
+  
+  # 2016
+  df_A_2016 <- df_raspagem  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2016)
+  
+  df_B_2016 <- df_CSAI_SSPDS %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2016)
+  
+  # 2017
+  df_A_2017 <- df_raspagem %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2017)
+  
+  df_B_2017 <- df_CSAI_SSPDS %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2017)
+  
+  # 2018
+  df_A_2018 <- df_raspagem  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2018)
+  
+  df_B_2018 <- df_CSAI_SSPDS  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2018)
+  
+  # 2019
+  df_A_2019 <- df_raspagem  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2019)
+  
+  df_B_2019 <- df_CSAI_SSPDS  %>% 
+    mutate(DATA_HOMICIDIO = as.Date(DATA_HOMICIDIO, format="%d/%m/%Y")) %>%
+    filter(between(month(DATA_HOMICIDIO), 1, 12) & year(DATA_HOMICIDIO) == 2019)
+  
+  df_A_2014n <- nrow(df_A_2014)
+  df_B_2014n <- nrow(df_B_2014)
+  df_A_2015n <- nrow(df_A_2015)
+  df_B_2015n <- nrow(df_B_2015)
+  df_A_2016n <- nrow(df_A_2016)
+  df_B_2016n <- nrow(df_B_2016)
+  df_A_2017n <- nrow(df_A_2017)
+  df_B_2017n <- nrow(df_B_2017)
+  df_A_2018n <- nrow(df_A_2018)
+  df_B_2018n <- nrow(df_B_2018)
+  df_A_2019n <- nrow(df_A_2019)
+  df_B_2019n <- nrow(df_B_2019)
+  
+  print(paste0("DF A 2014: ", df_A_2014n))
+  print(paste0("DF B 2014: ", df_B_2014n))
+  print(paste0("Inconsistência : ", df_B_2014n-df_A_2014n))
+  
+  print(paste0("DF A 2015: ", df_A_2015n))
+  print(paste0("DF B 2015: ", df_B_2015n))
+  print(paste0("Inconsistência : ", df_B_2015n-df_A_2015n))
+  
+  print(paste0("DF A 2016: ", df_A_2016n))
+  print(paste0("DF B 2016: ", df_B_2016n))
+  print(paste0("Inconsistência : ", df_B_2016n-df_A_2016n))
+  
+  print(paste0("DF A 2017: ", df_A_2017n))
+  print(paste0("DF B 2017: ", df_B_2017n))
+  print(paste0("Inconsistência : ", df_B_2017n-df_A_2017n))
+  
+  print(paste0("DF A 2018: ", df_A_2018n))
+  print(paste0("DF B 2018: ", df_B_2018n))
+  print(paste0("Inconsistência : ", df_B_2018n-df_A_2018n))
+  
+  print(paste0("DF A 2019: ", df_A_2019n))
+  print(paste0("DF B 2019: ", df_B_2019n))
+  print(paste0("Inconsistência : ", df_B_2019n-df_A_2019n))
+  
+  print(paste0("Inconsistência total: ", (44+28+50+37+49)-3)) 
+  ######## apenas para verificar a consistencia do numero de observacoes ######## 
+  
+  df_raspagem$HORA_HOMICIDIO <- NA
+  df_raspagem <- df_raspagem[,c(1:6,11,7:10)]
+  
+  # # [1] "NOVA Linha para -> Francisco Carlito Oliveira De Sousa Filho" -> 	Francisco Carlito Oliveira De S.filho
+  # # [1] "NOVA Linha para -> Luzimeire Da Silva Costa" -> 					          Luzimeire Da Silvacosta
+  # # [1] "NOVA Linha para -> Manoel Mendes Da Silva" -> 						          Manoel Mendes Dasilva
+  # # [1] "NOVA Linha para -> Francisco Cristiano De Aguiar Do Nascimento" -> Francisco Cristiano De Aguiar Do Nasci
+  # # [1] "NOVA Linha para -> Francisco Francicleudo Rodrigues De Moura" ->   Francisco Francicleudo Rodrigues De Mo
+  # # [1] "NOVA Linha para -> Francisco Xavier Pereira Guimaraes Junior" ->   Francisco Xavier Pereira Guimaraes Jun
+  # # [1] "NOVA Linha para -> Francisco Antonio Yago Da Silva Bezerra" ->     Francisco Antonio Yago Da Silva Bezerr
+  # # [1] "NOVA Linha para -> Robson Helder Torres Dos Santos" -> 			      Robsonhelder Torres Dos Santos
+  
+  # Substitui valores inconsistentes da variavel NOME_VITIMA
+  df_raspagem <- df_raspagem %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Francisco Carlito Oliveira De S.filho", "Francisco Carlito Oliveira De Sousa Filho")) %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Luzimeire Da Silvacosta", "Luzimeire Da Silva Costa")) %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Manoel Mendes Dasilva", "Manoel Mendes Da Silva"))  %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Francisco Cristiano De Aguiar Do Nasci", "Francisco Cristiano De Aguiar Do Nascimento")) %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Francisco Francicleudo Rodrigues De Mo", "Francisco Francicleudo Rodrigues De Moura")) %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Francisco Xavier Pereira Guimaraes Jun", "Francisco Xavier Pereira Guimaraes Junior"))  %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Francisco Antonio Yago Da Silva Bezerr", "Francisco Antonio Yago Da Silva Bezerra")) %>%
+    mutate(NOME_VITIMA = replace(NOME_VITIMA, NOME_VITIMA == "Robsonhelder Torres Dos Santos", "Robson Helder Torres Dos Santos")) 
+  
+  verifica_inconsistencias(df_CSAI_SSPDS$NOME_VITIMA, df_raspagem$NOME_VITIMA)
+  
+  inexistente <- NULL
+  
+  # Estrutura de repeticao 
+  for(i in 1:nrow(df_CSAI_SSPDS)) {
+    
+    indice_linha <- which(df_raspagem$NOME_VITIMA == df_CSAI_SSPDS[i,7]$NOME_VITIMA, arr.ind = TRUE)
+    
+    # merge variavel HORA e atualizacao das variaveis MUNICIPIO_HOMICIDIO,NATUREZA_HOMICIDIO,ARMA_UTILIZADA,HORA_HOMICIDIO
+    if(!is.na(indice_linha[1])) {
+      if(length(indice_linha[1]) > 0 ) {
+        
+        print(paste("Incluindo variavel HORA atraves da variavel NOME_VITIMA:", "Indice pesquisado",indice_linha[1], "Indice atualizado",i, sep = " "))
+        print(paste("->", df_raspagem[indice_linha[1],8], sep = " "))
+        
+        # Atualiza variavel MUNICIPIO_HOMICIDIO
+        df_raspagem[indice_linha[1], 3] <- df_CSAI_SSPDS[i, 2]$MUNICIPIO_HOMICIDIO
+        
+        # Atualiza variavel NATUREZA_HOMICIDIO
+        df_raspagem[indice_linha[1], 4] <- df_CSAI_SSPDS[i, 3]$NATUREZA_HOMICIDIO
+        
+        # Atualiza variavel ARMA_UTILIZADA
+        df_raspagem[indice_linha[1], 5] <- df_CSAI_SSPDS[i, 4]$ARMA_UTILIZADA
+        
+        # Atualiza variavel HORA_HOMICIDIO
+        df_raspagem[indice_linha[1], 7] <- df_CSAI_SSPDS[i, 6]$HORA_HOMICIDIO
+        
+      } 
+    }  else {
+      inexistente <- rbind(inexistente, df_CSAI_SSPDS[i, 7]$NOME_VITIMA) 
+    }
+    
+    if(df_CSAI_SSPDS[i, 7]$NOME_VITIMA %in% inexistente[,1]) {
+      
+      print(paste("NOVA LINHA referente ->", df_CSAI_SSPDS[i,7]$NOME_VITIMA, sep = " "))
+      df_raspagem <- rbind(dplyr::tibble(
+        
+        ID = NA,
+        AIS = df_CSAI_SSPDS[i, 1]$AIS,
+        MUNICIPIO_HOMICIDIO = df_CSAI_SSPDS[i, 2]$MUNICIPIO_HOMICIDIO,
+        NATUREZA_HOMICIDIO = df_CSAI_SSPDS[i, 3]$NATUREZA_HOMICIDIO,
+        ARMA_UTILIZADA = df_CSAI_SSPDS[i, 4]$ARMA_UTILIZADA,
+        DATA_HOMICIDIO = df_CSAI_SSPDS[i, 5]$DATA_HOMICIDIO,
+        HORA_HOMICIDIO = df_CSAI_SSPDS[i, 6]$HORA_HOMICIDIO,
+        NOME_VITIMA = df_CSAI_SSPDS[i, 7]$NOME_VITIMA,
+        GUIA_CADAVERICA = NA,
+        SEXO = df_CSAI_SSPDS[i, 8]$SEXO,
+        IDADE = df_CSAI_SSPDS[i, 9]$IDADE
+        
+      ), df_raspagem) #%>% arrange(as.Date(DATA_HOMICIDIO, format="%d/%m/%Y"))
+      
+    }
+    
+  }
+  
+  df_raspagem <- df_raspagem %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == str_to_title("ITAPAJE"), str_to_title("ITAPAGE"))) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == str_to_title("NOVA JAGUARIBARA"), str_to_title("JAGUARIBARA"))) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == str_to_title("DEP. IRAPUAN PINHEIRO"), str_to_title("DEPUTADO IRAPUAN PINHEIRO"))) %>%
+    mutate(MUNICIPIO_HOMICIDIO = replace(MUNICIPIO_HOMICIDIO, MUNICIPIO_HOMICIDIO == str_to_title("IRAPUAN PINHEIRO"), str_to_title("DEPUTADO IRAPUAN PINHEIRO")))
+  
+  return(df_raspagem)
+}
+
+# Funcao que faz os merges no data frame com municipios
+df_municipios_executa_merges <- function(df_dados_imputado) {
+  # INCIDENCIA_HOMICIDIO
+  df_dados_merges <- merge_variavel_incidencia_homicidio(df_dados_imputado)
+  
+  # MES_ANO
+  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
+  
+  # FAIXA_ETARIA
+  df_dados_merges <- merge_grupo_idades(df_dados_merges)
+  
+  # GRUPO_NATUREZA_HOMICIDIO
+  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
+  
+  # GRUPO_MUNICIPIO
+  df_dados_merges <- merge_grupo_municipios(df_dados_merges)
+  
+  # GRUPO_AIS
+  df_dados_merges <- merge_grupo_ais(df_dados_merges)
+  
+  # ARMA_DE_FOGO
+  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
+  
+  # POPULACAO
+  df_dados_merges <- merge_dados_populacao(df_dados_merges)
+  
+  # IDHM
+  df_dados_merges <- merge_dados_idhm(df_dados_merges)
+
+  # PIB_PERCAPITA
+  df_dados_merges <- merge_dados_pib(df_dados_merges)
+
+  # LATITUDE/LONGITUDE
+  df_dados_merges <- merge_dados_geo(df_dados_merges)
+  
+  print("Realizando exportacao para arquivo CSV:")
+  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges",".csv"))
+  
+  return(df_dados_merges)
+}
+
+# Funcao que faz os merges no data frame com bairros
+df_bairros_executa_merges <- function(df_dados_imputado) {
+  
+  # LATITUDE/LONGITUDE
+  df_dados_merges <- merge_dados_bairro_geo(df_dados_imputado)  
+  
+  # INCIDENCIA_HOMICIDIO
+  df_dados_merges <- merge_dados_incidencia_homicidio_bairro(df_dados_merges)
+  
+  # MES_ANO
+  df_dados_merges <- merge_variavel_mesano(df_dados_merges)
+  
+  # FAIXA_ETARIA
+  df_dados_merges <- merge_grupo_idades(df_dados_merges)
+  
+  # GRUPO_NATUREZA_HOMICIDIO
+  df_dados_merges <- merge_grupo_natureza_homicidio(df_dados_merges)
+  
+  # ARMA_DE_FOGO
+  df_dados_merges <- merge_grupo_arma_fogo(df_dados_merges)
+  
+  # POPULACAO
+  #df_dados_merges <- merge_dados_populacao(df_dados_merges)
+  
+  # IDHM
+  #df_dados_merges <- merge_dados_idhm(df_dados_merges)
+  
+  # PIB_PERCAPITA
+  #df_dados_merges <- merge_dados_pib(df_dados_merges)
+  
+  # reordena titulos do cabecalho
+  df_dados_merges <- df_dados_merges %>% 
+    dplyr::select(names(df_dados_imputado),BAIRRO,INCIDENCIA_HOMICIDIO,MES_ANO,FAIXA_ETARIA,GRUPO_NATUREZA_HOMICIDIO,ARMA_DE_FOGO,LATITUDE,LONGITUDE)
+  
+  print("Realizando exportacao para arquivo CSV:")
+  exporta_csv(df_dados_merges, paste0(nome_arquivo,"_Original_Limpo_Imputado_Merges_Bairros",".csv"))
+  
+  return(df_dados_merges)
+}
+
 
