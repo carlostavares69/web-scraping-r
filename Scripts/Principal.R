@@ -77,11 +77,12 @@ df_crime_ce_2014_2019_missing <- prepara_dados_imputacao(importa_csv("original",
 df_crime_ce_2014_2019_imputado <- realiza_imputacao_dados(df_crime_ce_2014_2019_missing)
 
 # Resultados da imputacao
-df_tab_orig1
-df_tab_pred1
 
 df_tab_orig2
 df_tab_pred2
+
+df_tab_orig5
+df_tab_pred5
 
 df_tab_orig3
 df_tab_pred3
@@ -89,8 +90,6 @@ df_tab_pred3
 df_tab_orig4
 df_tab_pred4
 
-df_tab_orig5
-df_tab_pred5
 
 # Graficos 
 gera_grafico_comparacao_imputacao(df_crime_ce_2014_2019_missing, df_crime_ce_2014_2019_imputado)

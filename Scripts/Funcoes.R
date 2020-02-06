@@ -1191,6 +1191,10 @@ merge_hora <- function(df_raspagem_original_limpo) {
     mutate(HORA = strftime(HORA, format='%H:%M:%S', tz = "GMT")) %>% 
     arrange(as.Date(DATA, format="%d/%m/%Y")) %>% 
     mutate_if(is.character, str_to_title) %>% 
+    mutate(TIPO_ARMA = stringr::str_squish(remove_acentos(TIPO_ARMA))) %>% 
+    mutate(NATUREZA = remove_acentos(str_trim(NATUREZA))) %>% 
+    mutate(`MUNICÍPIO` = stringr::str_squish(remove_acentos(`MUNICÍPIO`))) %>% 
+    mutate(`SEXO DA VÍTIMA` = stringr::str_squish(remove_acentos(`SEXO DA VÍTIMA`))) %>% 
     mutate(`NOME DA VÍTIMA` = stringr::str_squish(remove_acentos(`NOME DA VÍTIMA`))) %>% 
     .[,c(1,4,3,2,5,6,8,7,9)]
   
