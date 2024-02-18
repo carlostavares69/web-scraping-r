@@ -1,7 +1,0 @@
-Nota:
------
-Os arquivos PDF referente aos meses Janeiro a Abril foram convertidos para o 
-formato EXCEL através do software Adobe Acrobat Pro DC versão 2019 a fim de
-possibilitar à correta importação dos dados.
-
-INDICADORES CRIMINAIS 2014 - https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2
