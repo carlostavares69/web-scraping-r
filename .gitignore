@@ -1,0 +1,8 @@
+packrat/lib*/
+.Rproj.user
+.Rhistory
+.RData
+Arquivos/
+Documentos/
+Graficos/
+.zip
