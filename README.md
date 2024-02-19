@@ -35,6 +35,9 @@ Linguagem **R**, **Jupyter Notebook**, **Visual Code** como ambiente de desenvol
   https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2
   Os indicadores criminais do ano de 2013 não foram incluídos nas raspagens por conter apenas quantitativos mensais.
 
+##### Old the version in RStudio
+https://github.com/erivandosena/WebScraping-PesquisaMestrado/tree/Indicadores-Criminais_ce
+
 ##### REFERENCES
 R Core Team (2019). **R: A language and environment for statistical computing.** R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 
