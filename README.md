@@ -18,6 +18,15 @@ Através da técnica de raspagem de dados, extrair informações dos documentos 
 O processo da Raspagem de Dados é divido em cinco principais partes:
 **Coleta**, **Limpeza**, **Tratamento**, **Análise** e **Visualização** dos Dados.
 
+#### Requirements to Windows
+[Git 2.43.0](https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe)
+[R 4.3.2](https://cran.r-project.org/bin/windows/base/R-4.3.2-win.exe)
+[RTools 4.3](https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-5958-5975.exe)
+[Java 8 (JDK 8u202)](https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-windows-x64.exe)
+[Miniconda 3 (Conda 23.11.0 Python 3.11.5)](https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe)
+[Jupyter Notebook](https://jupyter.org/install#jupyter-notebook)
+[Visual Studio Code](https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user)
+
 #### Environment
 Linguagem **R**, **Jupyter Notebook**, **Visual Code** como ambiente de desenvolvimento integrado utilizando **linguagem de programação R** com computação estatística.
 
@@ -34,9 +43,6 @@ Linguagem **R**, **Jupyter Notebook**, **Visual Code** como ambiente de desenvol
 > **Indicadores criminais não inclusos**
   https://www.sspds.ce.gov.br/estatisticas-2-2-2-2-2-2
   Os indicadores criminais do ano de 2013 não foram incluídos nas raspagens por conter apenas quantitativos mensais.
-
-##### Old the version in RStudio
-https://github.com/erivandosena/WebScraping-PesquisaMestrado/tree/Indicadores-Criminais_ce
 
 ##### REFERENCES
 R Core Team (2019). **R: A language and environment for statistical computing.** R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
